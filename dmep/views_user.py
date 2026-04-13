@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.db.models import Q, F
 from decimal import Decimal
 from django.core.paginator import Paginator
-
+from django.http import JsonResponse
 from .models import Product, Category, Discount
 from .utils.discounts import calculate_discounted_price
 
@@ -103,14 +103,19 @@ def product_detail(request, pk):
     product = get_object_or_404(Product, pk=pk)
 
     final_price, discount, percent = calculate_discounted_price(product)
-    product.final_price = final_price
-    product.discount_percent = percent
 
-    return render(request, 'user/product/detail.html', {
-        'product': product
-    })
+    data = {
+        "id": product.id,
+        "name": product.name,
+        "image": product.img.url if product.img else "",
+        "price": float(final_price),
+        "original_price": float(product.selling_price or 0),
+        "discount_percent": percent,
+        "stock_qty": product.stock_qty,
+        "status": product.status,
+    }
 
-
+    return JsonResponse(data)
 # =======================
 # DASHBOARD (STORE FRONT)
 # =======================
@@ -124,7 +129,7 @@ def dashboard(request):
         final_price, discount, percent = calculate_discounted_price(p)
         p.final_price = final_price
         p.discount_percent = percent
-        p.discount_obj = discount
+        
 
         if discount:
             sale_products.append(p)
