@@ -1,0 +1,214 @@
+{% extends 'user/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+<!-- {% block body_class %}dashboard-page{% endblock %} -->
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<section class="hero-section d-flex align-items-center">
+
+    <div class="container hero-content text-white">
+
+        <h1 class="hero-title">
+            Wear Your Style.<br>
+            Own Your<br>
+            Confidence.
+        </h1>
+
+        <a href="{% url 'product_list' %}" class="hero-btn">
+            Shop Now
+        </a>
+
+    </div>
+
+</section>
+<!-- Categories Section (Bento Grid Style) -->
+<section class="bento-section">
+
+    <div class="bento-grid">
+
+        <!-- WOMEN -->
+        <div class="bento-item large">
+
+            <img src="{% static 'img/categories/women.jpg' %}" alt="Women">
+
+            <div class="overlay"></div>
+
+            <div class="content">
+                <span class="label">Modern Collection</span>
+                <h3>Women</h3>
+            </div>
+
+        </div>
+
+        <!-- MEN -->
+        <div class="bento-item wide">
+
+            <img src="{% static 'img/categories/men.jpg' %}" alt="Men">
+
+            <div class="overlay"></div>
+
+            <div class="content">
+                <h3>Men</h3>
+            </div>
+
+        </div>
+
+        <!-- UNISEX -->
+        <div class="bento-item">
+
+            <img src="{% static 'img/categories/unisex.jpg' %}" alt="Unisex">
+
+            <div class="overlay"></div>
+
+            <div class="content">
+                <h3>Unisex</h3>
+            </div>
+
+        </div>
+
+        <!-- SALE -->
+        <div class="bento-item sale">
+
+            <div class="sale-content">
+                <h2>SALE</h2>
+                <p>UP TO 50% OFF</p>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+<!-- <section class="section-wrap">
+
+    <div class="section-head">
+        <div>
+            <h2>New Arrivals</h2>
+            <p>Curated essentials for the modern wardrobe.</p>
+        </div>
+
+        <a href="#" class="view-all">
+            View All →
+        </a>
+    </div>
+
+    <div class="product-grid">
+
+        {% for product in new_products %}
+
+        <div class="product-card group">
+
+            IMAGE
+            <div class="img-box">
+
+                {% if product.img %}
+                <img src="{{ product.img.url }}" alt="{{ product.name }}">
+                {% else %}
+                <img src="{% static 'img/placeholder.jpg' %}" alt="No image">
+                {% endif %}
+
+                <button class="quick-btn">Quick Add</button>
+
+            </div>
+
+            INFO
+            <div class="product-info">
+
+                <h4>{{ product.name }}</h4>
+
+                <p class="meta">
+                    {{ product.category.name|default:"Uncategorized" }}
+                </p>
+
+                <p class="price text-danger">
+                    ₱{{ product.selling_price }}
+                </p>
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</section>
+<section class="promo-section">
+
+    <div class="promo-container">
+
+        <div class="promo-text">
+
+            <h2>FREE SHIPPING OVER ₱999</h2>
+
+            <p>Limited time offer for nationwide delivery</p>
+
+        </div>
+
+        <a href="#" class="promo-btn">
+            Claim Now
+        </a>
+
+    </div>
+
+</section> -->
+<section class="section-wrap">
+
+    <h2 class="section-title">Sale Products</h2>
+
+    <div class="best-grid">
+
+        {% for product in sale_products %}
+
+        <div class="best-card">
+
+            <div class="best-img" style="position:relative;">
+
+                {% if product.discount_obj %}
+                    <span class="sale-badge">
+                        SALE -{{ product.discount_percent }}%
+                    </span>
+                {% endif %}                
+                {% if product.img %}
+                    <img src="{{ product.img.url }}">
+                {% endif %}
+
+            </div>
+
+            <h3>{{ product.name }}</h3>
+
+            <p>
+
+                {% if product.discount_obj %}
+
+                    <span style="color:#e60023;font-weight:bold;">
+                        ₱{{ product.final_price|floatformat:2 }}
+                    </span>
+
+                    <span style="text-decoration:line-through;color:gray;margin-left:6px;">
+                        ₱{{ product.selling_price|floatformat:2 }}
+                    </span>
+
+                {% else %}
+
+                    ₱{{ product.selling_price|floatformat:2 }}
+
+                {% endif %}
+
+            </p>
+        </div>
+
+        {% empty %}
+        <p>No sale products found</p>
+
+        {% endfor %}    
+    </div>
+
+</section>
+{% endblock %}

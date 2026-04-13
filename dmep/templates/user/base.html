@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %} DMEP | COLLECTION{% endblock %}</title>
+
+    {% load static %}
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+    <!-- Global CSS -->
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+    tailwind.config = {
+    theme: {
+        extend: {
+        colors: {
+            primary: "#0040e0",
+            surface: "#fcf9f8",
+            "surface-container-low": "#f6f3f2",
+            outline: "#747688"
+        }
+        }
+    }
+    }
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="{% block body_class %}{% endblock %}">
+
+<header class="site-header sticky-top">
+
+    <nav class="header-inner">
+
+        <!-- Logo -->
+        <div class="logo">DMEP</div>
+
+        <!-- Center Nav -->
+        <div class="nav-links d-none d-md-flex">
+            <a href="{% url 'dashboard' %}" 
+            class="{% if request.resolver_match.url_name == 'dashboard' %}text-primary font-bold{% endif %}">
+            Home
+            </a>
+
+            <a href="{% url 'product_list' %}" 
+            class="{% if request.resolver_match.url_name == 'product_list' %}text-primary font-bold{% endif %}">
+            Shop
+            </a>
+        </div>
+
+        <!-- Right Icons -->
+        <div class="icon-group">
+
+            <a href="{% url 'cart' %}" class="icon-btn position-relative">
+                <i class="fa-solid fa-bag-shopping"></i>
+                <span class="badge-count">{{ cart_count }}</span>
+            </a>
+            <div class="profile-avatar">
+                {{ request.user.first_name|default:"U"|slice:":1"|upper }}
+                {{ request.user.last_name|default:""|slice:":1"|upper }}
+            </div>        
+        </div>
+
+    </nav>
+
+</header>
+<main>
+    {% block content %}{% endblock %}
+</main>
+<footer>
+
+    <div class="footer-grid">
+
+        <!-- BRAND -->
+        <div>
+            <div class="brand-title">DMEP</div>
+
+            <p class="brand-text">
+                Elevating daily essentials with high-end craftsmanship and editorial design. Wear your confidence.
+            </p>
+
+            <div class="socials">
+                <a href="#"><span class="material-symbols-outlined">share</span></a>
+                <a href="#"><span class="material-symbols-outlined">photo_camera</span></a>
+                <a href="#"><span class="material-symbols-outlined">chat</span></a>
+            </div>
+        </div>
+
+        <!-- CUSTOMER CARE -->
+        <div>
+            <h4>Customer Care</h4>
+            <ul>
+                <li><a href="#">FAQ</a></li>
+                <li><a href="#">Shipping</a></li>
+                <li><a href="#">Returns</a></li>
+            </ul>
+        </div>
+
+        <!-- LEGAL -->
+        <div>
+            <h4>Legal</h4>
+            <ul>
+                <li><a href="#">Privacy Policy</a></li>
+                <li><a href="#">Terms of Service</a></li>
+            </ul>
+        </div>
+
+        <!-- NEWSLETTER -->
+        <div>
+            <h4>Newsletter</h4>
+
+            <p class="brand-text">
+                Subscribe to receive updates, access to exclusive deals, and more.
+            </p>
+
+            <div class="newsletter">
+                <input type="email" placeholder="Email Address">
+                <button>Join</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="footer-bottom">
+        © {% now "Y" %} DMEP. All rights reserved.
+    </div>
+
+</footer><!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Global JS -->
+<script src="{% static 'js/app.js' %}"></script>
+
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>

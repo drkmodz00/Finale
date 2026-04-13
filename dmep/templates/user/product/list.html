@@ -1,0 +1,141 @@
+{% extends 'user/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/shop.css' %}">
+
+<main class="max-w-screen-2xl mx-auto px-8 py-12">
+
+  <!-- HEADER -->
+  <header class="mb-12">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+
+        <div>
+            <h1 class="text-5xl font-extrabold mb-2">Shop All</h1>
+            <p>Browse our products</p>
+        </div>
+
+      <!-- SEARCH -->
+        <form method="GET" class="flex items-center gap-2">
+        <input 
+            type="text" 
+            name="q" 
+            value="{{ q }}"
+            placeholder="Search products..."
+            class="bg-surface-container-low border-b border-outline px-4 py-2 text-sm focus:outline-none"
+        >
+        <button class="text-primary font-semibold">Search</button>
+        </form>
+    </div>
+  </header>
+
+  <div class="flex flex-col lg:flex-row gap-10">
+
+    <!-- SIDEBAR FILTER -->
+    <aside class="w-full lg:w-64">
+
+      <form method="GET" id="filterForm">
+
+        <!-- keep search -->
+        <input type="hidden" name="q" value="{{ q }}">
+
+        <!-- CATEGORY -->
+            <div class="flex flex-col gap-2">
+                <h2 class="cat font-bold">Categories</h2>
+
+                <!-- ALL -->
+                <a href="?q={{ q }}"
+                class="text-sm font-semibold px-2 py-1 rounded 
+                {% if not selected_category %}
+                    text-blue-500
+                {% else %}
+                    text-gray-600
+                {% endif %}
+                hover:text-blue-600">
+                    All
+                </a>
+
+                {% for cat in categories %}
+                    <a href="?q={{ q }}&category={{ cat.id }}"
+                    class="text-sm font-semibold px-2 py-1 rounded 
+                    {% if selected_category == cat.id|stringformat:'s' %}
+                        text-blue-500
+                    {% else %}
+                        text-gray-600
+                    {% endif %}
+                    hover:text-blue-600">
+                        {{ cat.name }}
+                    </a>
+                {% endfor %}
+
+            </div>        
+        </form>
+
+    </aside>
+
+    <!-- PRODUCTS -->
+    <section class="flex-1">
+
+        <div class="product-grid">
+
+            {% for product in products %}
+
+            <div class="product-card group">
+
+                <!-- IMAGE -->
+                <div class="aspect-wrapper">
+
+                    {% if product.img %}
+                        <img src="{{ product.img.url }}" alt="{{ product.name }}">
+                    {% else %}
+                        <img src="{% static 'images/no-image.png' %}">
+                    {% endif %}
+
+                    <!-- CART BUTTON -->
+                    <a href="{% url 'cart_add' product.id %}" class="cart-btn">
+                        <i class="fas fa-shopping-cart"></i>
+                    </a>
+
+                </div>
+
+                <!-- INFO -->
+                <div class="info">
+                    <h3 class="product-title">{{ product.name }}</h3>
+
+                    <p class="price">
+                        ₱{{ product.selling_price }}
+                    </p>
+                </div>
+
+            </div>
+
+            {% empty %}
+                <p>No products found</p>
+            {% endfor %}
+
+        </div>
+      <!-- PAGINATION -->
+      <div class="mt-10 flex justify-center gap-4">
+
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}" class="px-4 py-2 border">Prev</a>
+        {% endif %}
+
+        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}&q={{ q }}" class="px-4 py-2 border">Next</a>
+        {% endif %}
+
+      </div>
+
+    </section>
+
+  </div>
+
+</main>
+
+<script src="{% static 'js/shop.js' %}"></script>
+
+{% endblock %}
