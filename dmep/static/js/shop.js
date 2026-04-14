@@ -1,17 +1,21 @@
 function openProductModal(product) {
-  // image
-document.getElementById('modalProductImage').src = product.img
-  ? product.img
-  : '/static/images/no-image.png';
-  // name
-  document.getElementById('modalProductName').textContent = product.name;
 
-  // category & supplier
-  document.getElementById('modalCategory').textContent = product.category?.name ?? '';
-  document.getElementById('modalSupplier').textContent = product.supplier?.name ?? '';
-  document.getElementById('metaSep').classList.toggle(
-    'd-none', !product.category || !product.supplier
-  );
+  console.log("MODAL PRODUCT:", product);
+
+  // image
+  document.getElementById('modalProductImage').src = product.img
+    ? product.img
+    : '/static/images/no-image.png';
+    // name
+    document.getElementById('modalProductName').textContent = product.name;
+
+    // category & supplier
+    document.getElementById('modalCategory').textContent = product.category?.name ?? '';
+    document.getElementById('modalSupplier').textContent = product.supplier?.name ?? '';
+    document.getElementById('metaSep').classList.toggle(
+      'd-none', !product.category || !product.supplier
+
+);
 
   // sku & barcode
 //   const skuEl = document.getElementById('modalSku');
@@ -22,12 +26,31 @@ document.getElementById('modalProductImage').src = product.img
 //   barEl.classList.toggle('d-none', !product.barcode);
 
   // prices
-  document.getElementById('modalSellingPrice').textContent =
-    product.selling_price != null ? `₱${product.selling_price.toFixed(2)}` : '—';
-  document.getElementById('modalCostPrice').textContent =
-    product.cost_price != null ? `₱${product.cost_price.toFixed(2)}` : '—';
+// ✅ SALE PRICE LOGIC
+const priceWrapper = document.getElementById("modalPriceWrapper");
 
-  // stock
+if (product.has_discount && product.final_price && product.selling_price) {
+  priceWrapper.innerHTML = `
+          <span style="color:#e60023;font-weight:bold;font-size:1.5rem;">
+              ₱${product.final_price.toFixed(2)}
+          </span>
+          <span style="text-decoration:line-through;color:gray;margin-left:8px;">
+              ₱${product.selling_price.toFixed(2)}
+          </span>
+          <span style="color:#e60023;margin-left:8px;">
+              -${product.discount}%
+          </span>
+      `;
+  } else if (product.selling_price) {
+      priceWrapper.innerHTML = `
+          <span style="font-size:1.5rem;">
+              ₱${product.selling_price.toFixed(2)}
+          </span>
+      `;
+  } else {
+      priceWrapper.innerHTML = `—`;
+  } 
+ // stock
 //   const unit = product.unit ?? '';
 //   document.getElementById('modalStockQty').textContent =
 //     product.stock_qty ?? '—';
@@ -43,7 +66,8 @@ document.getElementById('modalProductImage').src = product.img
   dot.style.background = dotColors[product.status] ?? '#9E9E9E';
   document.getElementById('modalStatus').textContent =
     product.status ? product.status.charAt(0).toUpperCase() + product.status.slice(1) : '—';
-
+ 
+  document.getElementById('modalAddToCart').href = product.url || "#";
   // badges (is_new, is_best)
 //   document.getElementById('modalBadgeNew').classList.toggle('d-none', !product.is_new);
 //   document.getElementById('modalBadgeBest').classList.toggle('d-none', !product.is_best);
@@ -53,22 +77,24 @@ document.getElementById('modalProductImage').src = product.img
 
 window.showProduct = function(el) {
 
-  const product = {
-    name: el.dataset.name,
-    img: el.dataset.img,
-    category: el.dataset.category ? { name: el.dataset.category } : null,
-    supplier: el.dataset.supplier ? { name: el.dataset.supplier } : null,
-    sku: el.dataset.sku,
-    barcode: el.dataset.barcode,
-    selling_price: el.dataset.sellingPrice ? parseFloat(el.dataset.sellingPrice) : null,
-    cost_price: el.dataset.costPrice ? parseFloat(el.dataset.costPrice) : null,
-    stock_qty: el.dataset.stockQty ? parseInt(el.dataset.stockQty) : null,
-    reorder_level: el.dataset.reorderLevel ? parseInt(el.dataset.reorderLevel) : null,
-    unit: el.dataset.unit,
-    status: el.dataset.status,
-    // is_new: el.dataset.isNew === "true",
-    // is_best: el.dataset.isBest === "true"
-  };
+const product = {
+  
+  name: el.dataset.name,
+  img: el.dataset.img,
+  url: el.dataset.url,
+  category: el.dataset.category ? { name: el.dataset.category } : null,
+  supplier: el.dataset.supplier ? { name: el.dataset.supplier } : null,
+
+  selling_price: el.dataset.sellingPrice ? parseFloat(el.dataset.sellingPrice) : null,
+  cost_price: el.dataset.costPrice ? parseFloat(el.dataset.costPrice) : null,
+
+  // ✅ FIXED
+  final_price: el.dataset.finalPrice ? parseFloat(el.dataset.finalPrice) : null,
+  discount: el.dataset.discount ? parseFloat(el.dataset.discount) : null,
+  has_discount: el.dataset.hasDiscount === "true",
+
+  status: el.dataset.status,
+};
 
   openProductModal(product);
 };
@@ -76,3 +102,5 @@ window.showProduct = function(el) {
 // window.showProduct = function(el) {
 //   alert("clicked");
 // };
+
+// prices (WITH SALE SUPPORT)

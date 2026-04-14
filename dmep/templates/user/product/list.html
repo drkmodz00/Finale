@@ -77,12 +77,11 @@
             data-id="{{ product.id }}"
             data-url="{% url 'cart_add' product.id %}"
             data-name="{{ product.name }}"
+            data-final-price="{{ product.final_price|default:0 }}"
+            data-discount="{{ product.discount_percent|default:0 }}"
+            data-has-discount="{% if product.discount_obj %}true{% else %}false{% endif %}"
             data-selling-price="{{ product.selling_price|default:'' }}"
             data-cost-price="{{ product.cost_price|default:'' }}"
-            data-sku="{{ product.sku|default:'' }}"
-            data-barcode="{{ product.barcode|default:'' }}"
-            data-stock-qty="{{ product.stock_qty|default:'' }}"
-            data-reorder-level="{{ product.reorder_level|default:'' }}"
             data-unit="{{ product.unit|default:'' }}"
             data-status="{{ product.status|default:'' }}"
             data-img="{{ product.img.url|default:'' }}"
@@ -95,11 +94,18 @@
                     <!-- IMAGE -->
           <div class="aspect-wrapper">
 
+            {% if product.discount_obj %}
+              <span class="sale-badge">
+                SALE -{{ product.discount_percent }}%
+              </span>
+            {% endif %}
+
             {% if product.img %}
               <img src="{{ product.img.url }}" alt="{{ product.name }}">
             {% else %}
               <img src="{% static 'images/no-image.png' %}">
             {% endif %}
+
 
             <!-- CART BUTTON (OPTIONAL: still works separately) -->
             <a href="{% url 'cart_add' product.id %}"
@@ -115,8 +121,22 @@
             <h3 class="product-title">{{ product.name }}</h3>
 
             <p class="price">
-              ₱{{ product.selling_price }}
-            </p>
+              {% if product.discount_obj %}
+              
+              <span style="color:#e60023;font-weight:bold;">
+                      ₱{{ product.final_price|floatformat:2 }}
+                    </span>
+
+                    <span style="text-decoration:line-through;color:gray;margin-left:6px;">
+                      ₱{{ product.selling_price|floatformat:2 }}
+                    </span>
+
+                  {% else %}
+
+                    ₱{{ product.selling_price|floatformat:2 }}    
+                    
+                  {% endif %}
+              </p>
           </div>
 
         </div>
@@ -189,8 +209,7 @@
               <div class="price-card border-0 bg-transparent p-0">
                 <span class="price-label">Current Price</span>
                 <div class="d-flex align-items-baseline gap-2">
-                    <span class="price-value" id="modalSellingPrice"></span>
-                    <span class="price-value muted" id="modalCostPrice"></span>
+                  <div id="modalPriceWrapper"></div>                
                 </div>
               </div>
             </div>

@@ -1,1 +1,172 @@
-<h1>CART</h1>
+{% extends 'user/base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/cart.css' %}">
+
+<div class="cart-page">
+  <div class="cart-page__inner">
+
+    <!-- PAGE HEADER -->
+    <div class="cart-header">
+      <div class="cart-header__left">
+        <a href="{% url 'product_list' %}" class="back-link">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Continue shopping
+        </a>
+        <h1 class="cart-title">Your Cart</h1>
+      </div>
+      <div>
+        <span class="cart-badge">{{ cart|length }} item{{ cart|length|pluralize }}</span>
+      </div>
+    </div>
+
+    <!-- MAIN LAYOUT -->
+    <div class="cart-layout">
+
+      <!-- LEFT: ITEMS -->
+      <div class="cart-left">
+        <div class="cart-card">
+
+          {% if cart %}
+            <div class="cart-col-head">
+                <span></span>
+              <span>Product</span>
+              <span>Price</span>
+              <span>Quantity</span>
+              <span>Total</span>
+              <span></span>
+            </div>
+
+            {% for key, item in cart.items %}
+            <div class="cart-item">
+                  <!-- CHECKBOX -->
+                <div class="cart-select">
+                    <input type="checkbox"
+                        class="cart-checkbox"
+                        data-key="{{ key }}"
+                        checked
+                        onchange="updateSelectedCart()" />
+                </div>
+              <div class="product-cell">
+                <div class="product-thumb">
+                  {% if item.image %}
+                    <img src="{{ item.image }}" alt="{{ item.name }}">
+                  {% else %}
+                    <img src="{% static 'images/no-image.png' %}" alt="No image">
+                  {% endif %}
+                </div>
+                <div class="product-info">
+                  <div class="product-name">{{ item.name }}</div>
+                  {% if item.sku %}<div class="product-sku">{{ item.sku }}</div>{% endif %}
+                  {% if item.variant %}<div class="product-variant">{{ item.variant }}</div>{% endif %}
+                </div>
+              </div>
+
+              <div class="price-cell">₱{{ item.price|floatformat:2 }}</div>
+
+              <div class="qty-ctrl">
+                <button class="qty-btn" onclick="changeQty('{{ key }}', 'decrease')">
+                  <svg width="12" height="2" viewBox="0 0 12 2" fill="none"><path d="M1 1h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </button>
+                <span class="qty-val">{{ item.qty }}</span>
+                <button class="qty-btn" onclick="changeQty('{{ key }}', 'increase')">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </button>
+              </div>
+
+              <div class="line-total">₱{% widthratio item.price 1 item.qty %}</div>
+
+              <button class="remove-btn" onclick="removeItem('{{ key }}')" title="Remove">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M2 4h12M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+
+            </div>
+            {% endfor %}
+
+          {% else %}
+            <div class="empty-state">
+              <div class="empty-state__icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                  <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <p>Your cart is empty</p>
+              <a href="{% url 'product_list' %}" class="shop-link">Browse products</a>
+            </div>
+          {% endif %}
+
+          <div class="cart-footer">
+            <span class="cart-footer__count">{{ cart|length }} item{{ cart|length|pluralize }}</span>
+            <a href="{% url 'product_list' %}" class="continue-link">← Browse more</a>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RIGHT: SIDEBAR -->
+      <div class="cart-sidebar">
+
+        <!-- Summary -->
+        <div class="s-card">
+          <h2 class="s-card__title">Order Summary</h2>
+
+          <div class="sum-row">
+            <span class="sum-row__label">Subtotal</span>
+            <span class="sum-row__value">₱{{ total|floatformat:2 }}</span>
+          </div>
+          <div class="sum-row">
+            <span class="sum-row__label">Discount</span>
+            <span class="sum-row__value sum-row__value--saved">   
+                {% if discount_total > 0 %}
+                    -₱{{ discount_total|floatformat:2 }}
+                {% else %}
+                    --
+                {% endif %}
+            </span>
+        </div>
+          <div class="sum-row">
+            <span class="sum-row__label">Shipping</span>
+            <span class="sum-row__value sum-row__value--free">
+              {% if total >= 999 %}Free{% else %}Free over ₱999{% endif %}
+            </span>
+          </div>
+          <div class="sum-row">
+            <span class="sum-row__label">VAT (12%)</span>
+            <span class="sum-row__value">₱{% widthratio total 100 12 %}</span>
+          </div>
+
+          <div class="s-divider"></div>
+
+          <div class="grand-row">
+            <span class="grand-row__label">Grand Total</span>
+            <span class="grand-row__value">₱{{ total|floatformat:2 }}</span>
+          </div>
+
+          <a href="#" class="checkout-btn">
+            Proceed to Checkout
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+
+          <ul class="trust-list">
+            <li class="trust-item"><span class="trust-dot trust-dot--green"></span>Secure checkout guaranteed</li>
+            <li class="trust-item"><span class="trust-dot trust-dot--blue"></span>Eco-friendly packaging</li>
+            <li class="trust-item"><span class="trust-dot trust-dot--amber"></span>Free returns within 7 days</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{% static 'js/cart.js' %}"></script>
+{% endblock %}
