@@ -211,4 +211,26 @@
     </div>
 
 </section>
+<div id="successModal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-icon">✔</div>
+        <h2>Checkout Successful!</h2>
+        <p>Your order has been placed successfully.</p>
+        <button onclick="closeModal()">OK</button>
+    </div>
+</div>
+{% if messages %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const modal = document.getElementById("successModal");
+    if (modal) {
+        modal.style.display = "flex";
+    }
+});
+function closeModal() {
+    document.getElementById("successModal").style.display = "none";
+}
+</script>
+{% endif %}
+
 {% endblock %}

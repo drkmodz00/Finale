@@ -83,7 +83,7 @@
 
               <!-- TOTAL -->
               <div class="line-total">
-                ₱{% widthratio item.price 1 item.qty %}
+                ₱{{ item.total|floatformat:2 }}
               </div>
 
               <!-- REMOVE -->
