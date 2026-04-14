@@ -11,131 +11,260 @@
   <header class="mb-12">
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
 
-        <div>
-            <h1 class="text-5xl font-extrabold mb-2">Shop All</h1>
-            <p>Browse our products</p>
-        </div>
+      <div>
+        <h1 class="text-5xl font-extrabold mb-2">Shop All</h1>
+        <p>Browse our products</p>
+      </div>
 
       <!-- SEARCH -->
-        <form method="GET" class="flex items-center gap-2">
-        <input 
-            type="text" 
-            name="q" 
-            value="{{ q }}"
-            placeholder="Search products..."
-            class="bg-surface-container-low border-b border-outline px-4 py-2 text-sm focus:outline-none"
+      <form method="GET" class="flex items-center gap-2">
+        <input
+          type="text"
+          name="q"
+          value="{{ q }}"
+          placeholder="Search products..."
+          class="bg-surface-container-low border-b border-outline px-4 py-2 text-sm focus:outline-none"
         >
         <button class="text-primary font-semibold">Search</button>
-        </form>
+      </form>
+
     </div>
   </header>
 
   <div class="flex flex-col lg:flex-row gap-10">
 
-    <!-- SIDEBAR FILTER -->
+        <!-- SIDEBAR FILTER -->
     <aside class="w-full lg:w-64">
 
-      <form method="GET" id="filterForm">
+      <div class="flex flex-col gap-2">
 
-        <!-- keep search -->
-        <input type="hidden" name="q" value="{{ q }}">
+        <h2 class="font-bold mb-2">Categories</h2>
 
-        <!-- CATEGORY -->
-            <div class="flex flex-col gap-2">
-                <h2 class="cat font-bold">Categories</h2>
+        <!-- ALL -->
+        <a href="?q={{ q }}"
+          class="text-sm font-semibold text-gray-700 hover:text-blue-500">
+          All
+        </a>
 
-                <!-- ALL -->
-                <a href="?q={{ q }}"
-                class="text-sm font-semibold px-2 py-1 rounded 
-                {% if not selected_category %}
-                    text-blue-500
+        {% for cat in categories %}
+
+          <!-- PARENT -->
+          <button type="button"
+                  class="category-parent text-left text-sm font-semibold text-gray-800 hover:text-blue-600"
+                  onclick="toggleCat('{{ cat.id }}')">
+            {{ cat.name }}
+          </button>
+
+          <!-- SUBCATEGORIES -->
+          <div id="cat-{{ cat.id }}"
+              class="subcat {% if active_parent_id != cat.id %}hidden{% endif %}">
+
+            {% for sub in cat.subcategories.all %}
+              <a href="?q={{ q }}&category={{ sub.id }}"
+                class="block text-xs pl-4 py-1
+                {% if selected_category == sub.id|stringformat:'s' %}
+                  text-blue-600 font-semibold
                 {% else %}
-                    text-gray-600
-                {% endif %}
-                hover:text-blue-600">
-                    All
-                </a>
-
-                {% for cat in categories %}
-                    <a href="?q={{ q }}&category={{ cat.id }}"
-                    class="text-sm font-semibold px-2 py-1 rounded 
-                    {% if selected_category == cat.id|stringformat:'s' %}
-                        text-blue-500
-                    {% else %}
-                        text-gray-600
-                    {% endif %}
-                    hover:text-blue-600">
-                        {{ cat.name }}
-                    </a>
-                {% endfor %}
-
-            </div>        
-        </form>
-
-    </aside>
-
-    <!-- PRODUCTS -->
-    <section class="flex-1">
-
-        <div class="product-grid">
-
-            {% for product in products %}
-
-            <div class="product-card group">
-
-                <!-- IMAGE -->
-                <div class="aspect-wrapper">
-
-                    {% if product.img %}
-                        <img src="{{ product.img.url }}" alt="{{ product.name }}">
-                    {% else %}
-                        <img src="{% static 'images/no-image.png' %}">
-                    {% endif %}
-
-                    <!-- CART BUTTON -->
-                    <a href="{% url 'cart_add' product.id %}" class="cart-btn">
-                        <i class="fas fa-shopping-cart"></i>
-                    </a>
-
-                </div>
-
-                <!-- INFO -->
-                <div class="info">
-                    <h3 class="product-title">{{ product.name }}</h3>
-
-                    <p class="price">
-                        ₱{{ product.selling_price }}
-                    </p>
-                </div>
-
-            </div>
-
-            {% empty %}
-                <p>No products found</p>
+                  text-gray-500 hover:text-blue-500
+                {% endif %}">
+                {{ sub.name }}
+              </a>
             {% endfor %}
 
+          </div>
+
+        {% endfor %}
+
+      </div>
+
+    </aside>
+    <section class="flex-1">
+
+      <div class="product-grid">
+
+        {% for product in products %}
+
+        <!-- PRODUCT CARD -->
+        <div class="product-card group cursor-pointer"
+            onclick="showProduct(this)"
+            data-id="{{ product.id }}"
+            data-url="{% url 'cart_add' product.id %}"
+            data-name="{{ product.name }}"
+            data-final-price="{{ product.final_price|default:0 }}"
+            data-discount="{{ product.discount_percent|default:0 }}"
+            data-has-discount="{% if product.discount_obj %}true{% else %}false{% endif %}"
+            data-selling-price="{{ product.selling_price|default:'' }}"
+            data-cost-price="{{ product.cost_price|default:'' }}"
+            data-unit="{{ product.unit|default:'' }}"
+            data-status="{{ product.status|default:'' }}"
+            data-img="{{ product.img.url|default:'' }}"
+            data-is-new="{{ product.is_new|yesno:'true,false' }}"
+            data-is-best="{{ product.is_best|yesno:'true,false' }}"
+            data-category="{{ product.category.name|default:'' }}"
+            data-supplier="{{ product.supplier.name|default:'' }}">            
+            
+
+                    <!-- IMAGE -->
+          <div class="aspect-wrapper">
+
+            {% if product.discount_obj %}
+              <span class="sale-badge">
+                SALE -{{ product.discount_percent }}%
+              </span>
+            {% endif %}
+
+            {% if product.img %}
+              <img src="{{ product.img.url }}" alt="{{ product.name }}">
+            {% else %}
+              <img src="{% static 'images/no-image.png' %}">
+            {% endif %}
+
+
+            <!-- CART BUTTON (OPTIONAL: still works separately) -->
+            <a href="{% url 'cart_add' product.id %}"
+               class="cart-btn"
+               onclick="event.stopPropagation();">
+              <i class="fas fa-shopping-cart"></i>
+            </a>
+
+          </div>
+
+          <!-- INFO -->
+          <div class="info">
+            <h3 class="product-title">{{ product.name }}</h3>
+
+            <p class="price">
+              {% if product.discount_obj %}
+              
+              <span style="color:#e60023;font-weight:bold;">
+                      ₱{{ product.final_price|floatformat:2 }}
+                    </span>
+
+                    <span style="text-decoration:line-through;color:gray;margin-left:6px;">
+                      ₱{{ product.selling_price|floatformat:2 }}
+                    </span>
+
+                  {% else %}
+
+                    ₱{{ product.selling_price|floatformat:2 }}    
+                    
+                  {% endif %}
+              </p>
+          </div>
+
         </div>
+
+        {% empty %}
+          <p>No products found</p>
+        {% endfor %}
+
+      </div>
+
       <!-- PAGINATION -->
       <div class="mt-10 flex justify-center gap-4">
 
         {% if page_obj.has_previous %}
-          <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}" class="px-4 py-2 border">Prev</a>
+          <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}"
+             class="px-4 py-2 border">
+            Prev
+          </a>
         {% endif %}
 
-        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        <span>
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
 
         {% if page_obj.has_next %}
-          <a href="?page={{ page_obj.next_page_number }}&q={{ q }}" class="px-4 py-2 border">Next</a>
+          <a href="?page={{ page_obj.next_page_number }}&q={{ q }}"
+             class="px-4 py-2 border">
+            Next
+          </a>
         {% endif %}
 
       </div>
 
     </section>
-
   </div>
-
 </main>
 
+<div class="modal fade" id="productModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content minimal-modal">
+      
+      <button type="button" class="btn-close custom-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+
+      <div class="modal-body p-0">
+        <div class="row g-0">
+
+          <div class="col-md-5 modal-image-wrap">
+            <div class="modal-badges mb-3">
+              <!-- <span id="modalBadgeNew" class="badge-new d-none">NEW ARRIVAL</span>
+              <span id="modalBadgeBest" class="badge-best d-none">BEST SELLER</span> -->
+            </div>
+            <img id="modalProductImage" class="modal-image" src="" alt="Product Image">
+          </div>
+
+          <div class="col-md-7 modal-details">
+            <p class="modal-meta">
+              <span id="modalCategory"></span>
+              <span class="meta-sep d-none" id="metaSep"> / </span>
+              <span id="modalSupplier" style="color: #64748b;"></span>
+            </p>
+
+            <h2 id="modalProductName" class="modal-title"></h2>
+
+            <!-- <div class="modal-codes mb-4">
+              <span class="code-pill" id="modalSku"></span>
+              <span class="code-pill" id="modalBarcode"></span>
+            </div> -->
+
+            <div class="modal-price-grid">
+              <div class="price-card border-0 bg-transparent p-0">
+                <span class="price-label">Current Price</span>
+                <div class="d-flex align-items-baseline gap-2">
+                  <div id="modalPriceWrapper"></div>                
+                </div>
+              </div>
+            </div>
+
+            <hr class="my-4" style="border-color: #f1f5f9;">
+
+            <div class="modal-stock-grid">
+              <div class="stock-card">
+                <span class="stock-label">Availability</span>
+                <div class="d-flex align-items-baseline gap-1">
+                    <span class="stock-value" id="modalStockQty"></span>
+                    <span class="stock-unit" id="modalUnit1"></span>
+                </div>
+              </div>
+              <!-- <div class="stock-card">
+                <span class="stock-label">Reorder Limit</span>
+                <div class="d-flex align-items-baseline gap-1">
+                    <span class="stock-value" id="modalReorderLevel"></span>
+                    <span class="stock-unit" id="modalUnit2"></span>
+                </div>
+              </div> -->
+            </div>
+
+            <div class="modal-status-row mt-4">
+              <div class="status-indicator">
+                <span class="status-dot" id="modalStatusDot"></span>
+                <span id="modalStatus" class="fw-bold"></span>
+              </div>
+              <span class="unit-pill" id="modalUnitPill"></span>
+            </div>
+
+            <a id="modalAddToCart" href="#" class="modal-btn">
+                <i class="fas fa-shopping-cart me-2"></i> Add to Cart
+            </a>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>{% block extra_js %}
 <script src="{% static 'js/shop.js' %}"></script>
+{% endblock %}
 
 {% endblock %}
