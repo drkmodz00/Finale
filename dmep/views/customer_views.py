@@ -1,3 +1,4 @@
+import json
 from decimal import Decimal
 from django.contrib import messages
 from django.shortcuts import render, get_object_or_404, redirect
@@ -97,6 +98,7 @@ def product_search(request):
 # =====================
 def cart_view(request):
     cart = request.session.get("cart", {})
+    selected_keys = request.session.get("selected_items", list(cart.keys()))
 
     cart_items = []
     subtotal = Decimal("0.00")
@@ -106,15 +108,20 @@ def cart_view(request):
         product = get_object_or_404(Product, id=pid)
         qty = int(qty)
 
+        # ✅ APPLY DISCOUNT PROPERLY
+        final_price, discount_obj, percent = calculate_discounted_price(product)
+        final_price = Decimal(final_price)
+
         selling_price = Decimal(product.selling_price or 0)
-        final_price = selling_price
 
         line_original = selling_price * qty
         line_final = final_price * qty
         line_discount = line_original - line_final
 
-        subtotal += line_original
-        discount_total += line_discount
+        # ✅ ONLY COUNT SELECTED ITEMS
+        if pid in selected_keys:
+            subtotal += line_original
+            discount_total += line_discount
 
         cart_items.append({
             "key": pid,
@@ -124,6 +131,7 @@ def cart_view(request):
             "qty": qty,
             "total": line_final,
             "discount": line_discount,
+            "selected": pid in selected_keys,  # 👈 important
         })
 
     return render(request, "user/cart.html", {
@@ -196,25 +204,29 @@ def clear_cart(request):
 # =====================
 def checkout_view(request):
     cart = request.session.get("cart", {})
+    selected_keys = request.session.get("selected_items", list(cart.keys()))
 
     cart_items = []
     subtotal = Decimal("0.00")
     discount_total = Decimal("0.00")
 
     for pid, qty in cart.items():
+        if pid not in selected_keys:
+            continue  # ✅ ONLY SELECTED
+
         product = get_object_or_404(Product, id=pid)
         qty = int(qty)
 
-        selling_price = Decimal(product.selling_price or 0)
+        final_price, _, _ = calculate_discounted_price(product)
+        final_price = Decimal(final_price)
 
-        # no final_price in your model → SAFE FIX
-        final_price = selling_price
+        selling_price = Decimal(product.selling_price or 0)
 
         line_original = selling_price * qty
         line_final = final_price * qty
         line_discount = line_original - line_final
 
-        subtotal += line_final
+        subtotal += line_original
         discount_total += line_discount
 
         cart_items.append({
@@ -235,10 +247,9 @@ def checkout_view(request):
         "cart_items": cart_items,
         "subtotal": subtotal,
         "discount_total": discount_total,
-        "total_amount": subtotal,
+        "total_amount": subtotal - discount_total,
         "payment_choices": payment_choices,
     })
-
 
 # =====================
 # PROCESS SALE (CUSTOMER)
@@ -249,16 +260,15 @@ def process_sale(request):
         return redirect("checkout")
 
     cart = request.session.get("cart", {})
+    selected_keys = request.session.get("selected_items", list(cart.keys()))
 
     full_name = request.POST.get("full_name") or "Walk-in Customer"
     phone = request.POST.get("phone")
     payment_method = request.POST.get("payment_method")
 
-    # ✅ FIX: NEVER USE get_or_create for unique phone in messy DB
     customer = Customer.objects.filter(phone=phone).first()
 
     if customer:
-        # update name if needed
         if full_name and customer.full_name != full_name:
             customer.full_name = full_name
             customer.save()
@@ -274,32 +284,45 @@ def process_sale(request):
         status="completed"
     )
 
-    total = 0
+    subtotal = 0
+    discount_total = 0
 
     for pid, qty in cart.items():
+        if pid not in selected_keys:
+            continue  # ✅ ONLY SELECTED
+
         product = get_object_or_404(Product, id=pid)
         qty = int(qty)
 
-        price = float(product.selling_price or 0)
-        line_total = price * qty
+        final_price, _, _ = calculate_discounted_price(product)
 
-        total += line_total
+        price = float(product.selling_price or 0)
+        discounted_price = float(final_price)
+
+        line_original = price * qty
+        line_final = discounted_price * qty
+        line_discount = line_original - line_final
+
+        subtotal += line_original
+        discount_total += line_discount
 
         SaleItem.objects.create(
             sale=sale,
             product=product,
             quantity=qty,
-            unit_price=price,
-            line_total=line_total
+            unit_price=discounted_price,
+            line_total=line_final
         )
 
         product.stock_qty = (product.stock_qty or 0) - qty
         product.save()
 
-    sale.subtotal = total
-    sale.total_amount = total
+    sale.subtotal = subtotal
+    sale.total_amount = subtotal - discount_total
     sale.save()
 
     request.session["cart"] = {}
+    request.session["selected_items"] = []
+
     messages.success(request, "Order placed successfully!")
     return redirect("dashboard")

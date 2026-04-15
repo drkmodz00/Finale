@@ -11,6 +11,7 @@ from ..utils.discounts import calculate_discounted_price
 # =====================
 def cart_view(request):
     cart = request.session.get("cart", {})
+    selected_keys = request.session.get("selected_items", list(cart.keys()))
 
     cart_items = []
     subtotal = Decimal("0.00")
@@ -20,15 +21,20 @@ def cart_view(request):
         product = get_object_or_404(Product, id=pid)
         qty = int(qty)
 
+        # ✅ APPLY DISCOUNT PROPERLY
+        final_price, discount_obj, percent = calculate_discounted_price(product)
+        final_price = Decimal(final_price)
+
         selling_price = Decimal(product.selling_price or 0)
-        final_price = Decimal(product.final_price or selling_price)
 
         line_original = selling_price * qty
         line_final = final_price * qty
         line_discount = line_original - line_final
 
-        subtotal += line_original
-        discount_total += line_discount
+        # ✅ ONLY COUNT SELECTED ITEMS
+        if pid in selected_keys:
+            subtotal += line_original
+            discount_total += line_discount
 
         cart_items.append({
             "key": pid,
@@ -38,6 +44,7 @@ def cart_view(request):
             "qty": qty,
             "total": line_final,
             "discount": line_discount,
+            "selected": pid in selected_keys,  # 👈 important
         })
 
     return render(request, "user/cart.html", {
@@ -46,7 +53,6 @@ def cart_view(request):
         "discount_total": discount_total,
         "total_amount": subtotal - discount_total,
     })
-
 # =====================
 # ADD TO CART
 # =====================

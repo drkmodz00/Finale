@@ -48,14 +48,12 @@
             <div class="cart-item">
 
               <!-- CHECKBOX -->
-              <div class="cart-select">
-                <input type="checkbox"
-                       class="cart-checkbox"
-                       data-key="{{ item.key }}"
-                       checked
-                       onchange="updateSelectedCart()" />
-              </div>
-
+              <input type="checkbox"
+                    class="cart-checkbox"
+                    data-key="{{ item.key }}"
+                    {% if item.selected %}checked{% endif %}
+                    onchange="updateSelectedCart()" />
+                    
               <!-- PRODUCT -->
               <div class="product-cell">
                 <div class="product-thumb">
