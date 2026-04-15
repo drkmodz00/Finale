@@ -13,13 +13,35 @@ from ..models import Product, Customer, Sale, SaleItem, Discount, Category
 from ..utils.discounts import calculate_discounted_price
 
 
-# =====================
-# DASHBOARD
-# =====================
 def dashboard(request):
-    products = Product.objects.filter(status="active")[:8]
-    return render(request, "user/dashboard.html", {"products": products})
+    products = Product.objects.filter(status="active")
 
+    sale_products = []
+
+    for product in products:
+        final_price, discount_obj, percent = calculate_discounted_price(product)
+
+        # attach values
+        product.final_price = final_price
+        product.discount_percent = percent or 0
+        product.discount_obj = discount_obj
+
+        if discount_obj:
+            sale_products.append(product)
+
+    sale_products = sale_products[:8]
+
+    # categories (unchanged but cleaner fallback)
+    women = Category.objects.filter(name__iexact="Women").first()
+    men = Category.objects.filter(name__iexact="Men").first()
+    kids = Category.objects.filter(name__iexact="Kids").first()
+
+    return render(request, "user/dashboard.html", {
+        "sale_products": sale_products,
+        "women_id": women.id if women else None,
+        "men_id": men.id if men else None,
+        "kids_id": kids.id if kids else None,
+    })
 
 # =====================
 # PRODUCTS
@@ -39,11 +61,23 @@ def product_list(request):
 
     # CATEGORY FILTER
     if category_id:
-        products = products.filter(category_id=category_id)
-
         try:
             selected_cat = Category.objects.get(id=category_id)
+
+            # IF PARENT CATEGORY
+            if selected_cat.parent is None:
+                sub_ids = selected_cat.subcategories.values_list("id", flat=True)
+
+                products = products.filter(
+                    Q(category_id__in=sub_ids) | Q(category_id=selected_cat.id)
+                )
+
+            # IF SUBCATEGORY
+            else:
+                products = products.filter(category_id=selected_cat.id)
+
             active_parent_id = selected_cat.parent_id
+
         except Category.DoesNotExist:
             pass
 
@@ -326,3 +360,12 @@ def process_sale(request):
 
     messages.success(request, "Order placed successfully!")
     return redirect("dashboard")
+
+def attach_discount(product):
+    final_price, discount_obj, percent = calculate_discounted_price(product)
+
+    product.final_price = final_price
+    product.discount_percent = percent or 0
+    product.discount_obj = discount_obj
+
+    return product

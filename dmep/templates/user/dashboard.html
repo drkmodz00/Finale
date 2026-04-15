@@ -33,8 +33,7 @@
     <div class="bento-grid">
 
         <!-- WOMEN -->
-        <div class="bento-item large">
-
+        <a href="{% url 'product_list' %}?category={{ women_id }}" class="bento-item large">
             <img src="{% static 'img/categories/women.jpg' %}" alt="Women">
 
             <div class="overlay"></div>
@@ -43,12 +42,9 @@
                 <span class="label">Modern Collection</span>
                 <h3>Women</h3>
             </div>
-
-        </div>
-
+        </a>
         <!-- MEN -->
-        <div class="bento-item wide">
-
+        <a href="{% url 'product_list' %}?category={{ men_id }}" class="bento-item wide">
             <img src="{% static 'img/categories/men.jpg' %}" alt="Men">
 
             <div class="overlay"></div>
@@ -56,28 +52,23 @@
             <div class="content">
                 <h3>Men</h3>
             </div>
-
-        </div>
-
+        </a>
         <!-- UNISEX -->
-        <div class="bento-item">
-
-            <img src="{% static 'img/categories/unisex.jpg' %}" alt="Unisex">
+        <a href="{% url 'product_list' %}?category={{ kids_id }}" class="bento-item">
+            <img src="{% static 'img/categories/kids.jpg' %}" alt="Kids">
 
             <div class="overlay"></div>
 
             <div class="content">
-                <h3>Unisex</h3>
+                <h3>Kids</h3>
             </div>
-
-        </div>
-
-        <!-- SALE -->
+        </a>       
+         <!-- SALE -->
         <div class="bento-item sale">
 
             <div class="sale-content">
                 <h2>SALE</h2>
-                <p>UP TO 50% OFF</p>
+                <p>UP TO 20% OFF</p>
             </div>
 
         </div>
@@ -230,6 +221,7 @@ document.addEventListener("DOMContentLoaded", function () {
 function closeModal() {
     document.getElementById("successModal").style.display = "none";
 }
+
 </script>
 {% endif %}
 

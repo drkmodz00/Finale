@@ -82,64 +82,60 @@
     {% block content %}{% endblock %}
 </main>
 <footer>
-
     <div class="footer-grid">
 
         <!-- BRAND -->
         <div>
-            <div class="brand-title">DMEP</div>
-
+            <div class="brand-title">MyShop</div>
             <p class="brand-text">
-                Elevating daily essentials with high-end craftsmanship and editorial design. Wear your confidence.
+                Wear your style. Own your confidence.
             </p>
 
             <div class="socials">
-                <a href="#"><span class="material-symbols-outlined">share</span></a>
-                <a href="#"><span class="material-symbols-outlined">photo_camera</span></a>
-                <a href="#"><span class="material-symbols-outlined">chat</span></a>
+                <a href="#">FB</a>
+                <a href="#">IG</a>
+                <a href="#">TW</a>
             </div>
         </div>
 
-        <!-- CUSTOMER CARE -->
+        <!-- SHOP -->
         <div>
-            <h4>Customer Care</h4>
+            <h4>Shop</h4>
             <ul>
-                <li><a href="#">FAQ</a></li>
-                <li><a href="#">Shipping</a></li>
-                <li><a href="#">Returns</a></li>
+                <li><a href="{% url 'product_list' %}">All Products</a></li>
+                <li><a href="{% url 'product_list' %}?category={{ women_id }}">Women</a></li>
+                <li><a href="{% url 'product_list' %}?category={{ men_id }}">Men</a></li>
+                <li><a href="{% url 'product_list' %}?category={{ kids_id }}">Kids</a></li>
             </ul>
         </div>
 
-        <!-- LEGAL -->
+        <!-- HELP -->
         <div>
-            <h4>Legal</h4>
+            <h4>Help</h4>
             <ul>
-                <li><a href="#">Privacy Policy</a></li>
-                <li><a href="#">Terms of Service</a></li>
+                <li><a href="#">Contact</a></li>
+                <li><a href="#">Shipping</a></li>
+                <li><a href="#">Returns</a></li>
             </ul>
         </div>
 
         <!-- NEWSLETTER -->
         <div>
             <h4>Newsletter</h4>
+            <p class="brand-text">Get updates on new arrivals & sales</p>
 
-            <p class="brand-text">
-                Subscribe to receive updates, access to exclusive deals, and more.
-            </p>
-
-            <div class="newsletter">
-                <input type="email" placeholder="Email Address">
-                <button>Join</button>
-            </div>
+            <form class="newsletter">
+                <input type="email" placeholder="Your email">
+                <button type="submit">JOIN</button>
+            </form>
         </div>
 
     </div>
 
     <div class="footer-bottom">
-        © {% now "Y" %} DMEP. All rights reserved.
+        © 2026 MyShop. All rights reserved.
     </div>
-
-</footer><!-- Bootstrap JS -->
+</footer>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- Global JS -->
