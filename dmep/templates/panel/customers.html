@@ -1,0 +1,107 @@
+{% extends 'panel/base.html' %}
+{% block content %}
+
+<!-- HEADER -->
+<div class="flex items-center justify-between mb-6">
+
+    <div>
+        <h1 class="text-2xl font-semibold text-slate-800">Customers</h1>
+        <p class="text-sm text-slate-400">All guest and registered customers</p>
+    </div>
+
+</div>
+
+<!-- TABLE -->
+<div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+
+<table class="w-full text-sm">
+
+<!-- HEADER -->
+<thead class="bg-slate-900 text-white text-xs uppercase tracking-wider">
+<tr>
+    <th class="px-4 py-3 text-left">Customer</th>
+    <th class="px-4 py-3 text-left">Phone</th>
+    <th class="px-4 py-3 text-left">Email</th>
+    <th class="px-4 py-3 text-left">Sales</th>
+    <th class="px-4 py-3 text-left">Loyalty</th>
+    <th class="px-4 py-3 text-center w-20">Action</th>
+</tr>
+</thead>
+
+<!-- BODY -->
+<tbody>
+
+{% for c in customers %}
+<tr class="border-b hover:bg-slate-50 transition">
+
+    <!-- NAME -->
+    <td class="px-4 py-3 font-medium text-slate-800">
+        {{ c.full_name }}
+    </td>
+
+    <!-- PHONE -->
+    <td class="px-4 py-3 text-slate-600">
+        {{ c.phone|default:"—" }}
+    </td>
+
+    <!-- EMAIL -->
+    <td class="px-4 py-3 text-slate-600">
+        {{ c.email|default:"—" }}
+    </td>
+
+    <!-- SALES -->
+    <td class="px-4 py-3">
+        <span class="px-2 py-1 text-xs bg-slate-100 rounded-full">
+            {{ c.sale_count }}
+        </span>
+    </td>
+
+    <!-- LOYALTY -->
+    <td class="px-4 py-3">
+
+        <div class="flex items-center justify-between mb-1">
+            <span class="text-xs text-indigo-600 font-medium">
+                {{ c.loyalty_points }} pts
+            </span>
+            <span class="text-xs text-slate-400">
+                {{ c.pts_percent }}%
+            </span>
+        </div>
+
+        <div class="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div class="h-full bg-indigo-600 rounded-full"
+                 style="width: {{ c.pts_percent }}%">
+            </div>
+        </div>
+
+    </td>
+
+    <!-- ACTION -->
+    <td class="px-4 py-3 text-center">
+
+        <a href="{% url 'customer_details' c.id %}"
+           class="inline-flex items-center justify-center w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-blue-600 transition">
+
+            <i class="fa-regular fa-eye"></i>
+
+        </a>
+
+    </td>
+
+</tr>
+
+{% empty %}
+<tr>
+    <td colspan="6" class="text-center py-10 text-slate-400">
+        No customers found
+    </td>
+</tr>
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+{% endblock %}

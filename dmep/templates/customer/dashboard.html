@@ -1,0 +1,206 @@
+{% extends 'customer/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<section class="relative min-h-[85vh] flex items-center">
+
+    <div class="absolute inset-0">
+        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOUVjWxJaQGeesRffV2Dzq406g_-ctlhVIQo7AZKVUFvF6QqAmynzRRPNioKH63jFqOVOQh4Pd9zi8nJKgdpzwspwnHzCei8kjgnEgMqneZHmyOYnDAR9N4b8oBsU-7PtwDYz73c3HCoC8dYJdYev0MFV1FDGKYJn_cekOHxxdJvLmxXMwvREsinPVcECsIXN7vHfGn28M9fCGCgc2adiik9uFZ8RN_NhL03c1w9mp7aRFY2tfqabNZGRoPoaDe7W_FQDD85XY5Q"
+             class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-r from-black/75 to-black/30"></div>
+    </div>
+
+    <div class="relative w-full px-6 md:px-12 lg:px-16">
+
+        <div class="max-w-xl">
+
+            <h1 class="text-white text-4xl md:text-6xl font-extrabold leading-tight mb-6">
+                Wear Your Style.<br>
+                Own Your<br>
+                Confidence.
+            </h1>
+
+            <a href="{% url 'products' %}"
+               class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-7 py-3 rounded-lg font-semibold shadow-lg transition">
+                Shop Now
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- SALE PRODUCTS -->
+<section class="max-w-6xl mx-auto px-4 py-12">
+
+    <h2 class="text-2xl font-bold text-center mb-10 tracking-wide uppercase">
+        Sale Products
+    </h2>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+
+        {% for product in sale_products %}
+
+        <div class="cursor-pointer group relative"
+             onclick="showProduct(this)"
+
+             data-id="{{ product.id }}"
+             data-url="{% url 'cart_add' product.id %}"
+             data-img="{% if product.img and product.img.name %}{{ product.img.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}">
+
+            <!-- IMAGE -->
+            <div class="relative aspect-[4/5] rounded-xl overflow-hidden bg-gray-100">
+
+                {% if product.discount_percent > 0 %}
+                <span class="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
+                    -{{ product.discount_percent }}%
+                </span>
+                {% endif %}
+
+                <img src="{% if product.img and product.img.name %}{{ product.img.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}"
+                     class="w-full h-full object-cover group-hover:scale-105 transition">
+
+                <!-- ADD TO CART (UPDATED) -->
+                <button
+                    class="add-to-cart-btn absolute bottom-3 right-3 bg-black text-white w-10 h-10 flex items-center justify-center rounded-lg hover:bg-blue-600 transition"
+                    data-url="{% url 'cart_add' product.id %}"
+                    data-img="{% if product.img and product.img.name %}{{ product.img.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}"
+                    onclick="event.stopPropagation();">
+                    <i class="fas fa-shopping-cart text-sm"></i>
+                </button>
+
+            </div>
+
+            <!-- INFO -->
+            <div class="mt-3 text-sm">
+
+                <h3 class="font-medium text-gray-900">
+                    {{ product.name }}
+                </h3>
+
+                <p class="mt-1 font-semibold text-gray-900">
+                    {% if product.discount_percent > 0 %}
+                        <span class="text-red-600">
+                            ₱{{ product.final_price|floatformat:2 }}
+                        </span>
+                        <span class="line-through text-gray-400 text-xs ml-1">
+                            ₱{{ product.selling_price|floatformat:2 }}
+                        </span>
+                    {% else %}
+                        ₱{{ product.selling_price|floatformat:2 }}
+                    {% endif %}
+                </p>
+
+            </div>
+
+        </div>
+
+        {% empty %}
+            <p>No sale products found</p>
+        {% endfor %}
+
+    </div>
+
+</section>
+
+<!-- FEATURE BLOCK -->
+<section class="max-w-6xl mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+
+    <div>
+        <i class="fa-solid fa-truck text-xl mb-2"></i>
+        <h4 class="font-semibold">Fast Delivery</h4>
+        <p class="text-sm text-gray-500">Nationwide shipping</p>
+    </div>
+
+    <div>
+        <i class="fa-solid fa-shield text-xl mb-2"></i>
+        <h4 class="font-semibold">Secure Checkout</h4>
+        <p class="text-sm text-gray-500">Safe payments</p>
+    </div>
+
+    <div>
+        <i class="fa-solid fa-star text-xl mb-2"></i>
+        <h4 class="font-semibold">Quality Products</h4>
+        <p class="text-sm text-gray-500">Verified items only</p>
+    </div>
+
+</section>
+
+<!-- SUCCESS MODAL -->
+{% if last_order_code %}
+<div id="successModal"
+     class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+
+    <div class="bg-white p-6 rounded-xl text-center w-[320px] animate-fadeIn">
+
+        <div class="text-green-500 text-3xl mb-2">✔</div>
+
+        <h2 class="text-lg font-semibold">Order Confirmed</h2>
+        <p class="text-sm text-gray-500 mb-3">Your order has been successfully placed.</p>
+
+        <div class="bg-gray-100 p-3 rounded mb-4">
+            <div class="font-bold text-gray-900">{{ last_order_code }}</div>
+        </div>
+
+        <button onclick="closeModal()" class="text-sm text-gray-500">
+            Continue Shopping
+        </button>
+
+    </div>
+</div>
+{% endif %}
+
+<!-- ================= FLY TO CART SCRIPT ================= -->
+<script>
+const cartIcon = document.querySelector('[href="{% url "cart" %}"]');
+
+function flyToCart(imgSrc, startX, startY, url) {
+
+    const img = document.createElement("img");
+    img.src = imgSrc;
+    img.className = "fixed w-12 h-12 object-cover rounded-lg z-[9999] transition-all duration-700";
+
+    document.body.appendChild(img);
+
+    const cart = cartIcon.getBoundingClientRect();
+
+    img.style.left = startX + "px";
+    img.style.top = startY + "px";
+
+    setTimeout(() => {
+        img.style.left = cart.left + "px";
+        img.style.top = cart.top + "px";
+        img.style.width = "20px";
+        img.style.height = "20px";
+        img.style.opacity = "0.4";
+    }, 20);
+
+    setTimeout(() => {
+        img.remove();
+        fetch(url).then(() => {
+            // update cart silently (NO redirect)
+            location.reload(); // optional remove if you want zero reload
+        });
+    }, 700);
+}
+
+// attach events
+document.querySelectorAll(".add-to-cart-btn").forEach(btn => {
+    btn.addEventListener("click", function(e){
+        e.preventDefault();
+
+        const card = this.closest("[data-img]");
+        const img = this.dataset.img;
+        const url = this.dataset.url;
+
+        const rect = this.getBoundingClientRect();
+
+        flyToCart(img, rect.left, rect.top, url);
+    });
+});
+</script>
+
+{% endblock %}

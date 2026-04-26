@@ -1,0 +1,49 @@
+{% extends 'customer/base.html' %}
+
+{% block content %}
+
+<div class="max-w-xs mx-auto text-sm font-mono">
+
+  <div class="text-center mb-3">
+    <h2 class="font-bold">YOUR STORE</h2>
+    <p>Receipt</p>
+  </div>
+
+  <hr>
+
+  {% for item in items %}
+  <div class="flex justify-between">
+    <span>{{ item.product.name }} x{{ item.qty }}</span>
+    <span>{{ item.total }}</span>
+  </div>
+  {% endfor %}
+
+  <hr>
+
+  <div class="flex justify-between font-bold">
+    <span>Total</span>
+    <span>{{ total }}</span>
+  </div>
+
+  <div class="flex justify-between">
+    <span>Cash</span>
+    <span>{{ cash }}</span>
+  </div>
+
+  <div class="flex justify-between">
+    <span>Change</span>
+    <span>{{ change }}</span>
+  </div>
+
+  <hr>
+
+  <p class="text-center mt-2">Thank you!</p>
+
+  <button onclick="window.print()"
+    class="w-full mt-4 bg-blue-600 text-white py-2 rounded">
+    Print
+  </button>
+
+</div>
+
+{% endblock %}

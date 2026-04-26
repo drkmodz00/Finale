@@ -32,12 +32,23 @@ class CashierAdmin(admin.ModelAdmin):
     list_filter = ('role', 'status')
     search_fields = ('full_name', 'username')
     ordering = ('full_name',)
-    exclude = ('password_hash',)
+
+    # show password field in admin form
+    fields = ('full_name', 'username', 'role', 'status', 'password_hash')
+
+    def save_model(self, request, obj, form, change):
+        raw_password = form.cleaned_data.get('password_hash')
+
+        # only hash if user typed something
+        if raw_password and not raw_password.startswith('pbkdf2_'):
+            obj.set_password(raw_password)
+
+        super().save_model(request, obj, form, change)
 
 @admin.register(Customer)
 class CustomerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'full_name', 'phone', 'email', 'loyalty_points')
-    search_fields = ('full_name', 'phone', 'email')
+    list_display = ('id', 'full_name', 'phone', 'email', 'loyalty_points', 'address', 'created_at')
+    search_fields = ('full_name', 'phone', 'email', 'address')
     ordering = ('full_name',)
 
 @admin.register(Product)
@@ -45,7 +56,6 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'name', 'sku', 'category', 'supplier',
         'cost_price', 'selling_price', 'stock_qty', 'reorder_level', 'status', 
-        'is_new', 'is_best'
     )
     list_filter = ('status', 'category', 'supplier')
     search_fields = ('name', 'sku', 'barcode')
@@ -59,6 +69,7 @@ class ProductAdmin(admin.ModelAdmin):
 class DiscountAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'name', 'type', 'value',
+        'created_at',
         'valid_from', 'valid_until',
         'applies_to', 'status',
         'get_categories', 'get_products'
@@ -125,3 +136,8 @@ class POItemAdmin(admin.ModelAdmin):
     list_display = ('id', 'po', 'product', 'qty_ordered', 'qty_received', 'unit_cost')
     search_fields = ('product__name',)
     ordering = ('po',)
+
+@admin.register(HelpCenter)
+class HelpCenterAdmin(admin.ModelAdmin):
+    list_display = ("email", "phone", "updated_at")
+

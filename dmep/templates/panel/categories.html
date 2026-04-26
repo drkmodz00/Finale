@@ -1,0 +1,296 @@
+{% extends 'panel/base.html' %}
+{% block content %}
+
+<!-- ================= HEADER ================= -->
+<div class="flex items-center justify-between mb-8">
+
+    <div>
+        <h1 class="text-2xl font-semibold text-slate-800">Categories</h1>
+        <p class="text-sm text-slate-400">Organize your product structure</p>
+    </div>
+
+    <button onclick="openCreateModal()"
+        class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm">
+        + New Category
+    </button>
+
+</div>
+
+<!-- ================= TABLE ================= -->
+<div class="bg-white border rounded-xl shadow-sm overflow-visible">
+
+<table class="w-full text-sm">
+
+<thead class="bg-slate-100 text-slate-600 text-xs uppercase">
+<tr>
+    <th class="px-5 py-3 text-left">Category</th>
+    <th class="px-5 py-3 text-left">Parent</th>
+    <th class="px-5 py-3 text-left">Products</th>
+    <th class="px-5 py-3 text-right">Actions</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for category in categories %}
+<tr class="border-t hover:bg-slate-50">
+
+    <!-- CATEGORY -->
+    <td class="px-5 py-4">
+        <div class="flex items-center gap-3">
+
+            {% if category.img %}
+                <img src="{{ category.img.url }}"
+                     class="w-10 h-10 rounded-lg object-cover border">
+            {% else %}
+                <div class="w-10 h-10 bg-slate-200 rounded-lg"></div>
+            {% endif %}
+
+            <div>
+                <div class="font-medium">{{ category.name }}</div>
+                <div class="text-xs text-slate-400">
+                    {{ category.description|default:"No description" }}
+                </div>
+            </div>
+
+        </div>
+    </td>
+
+    <!-- PARENT -->
+    <td class="px-5 py-4 text-slate-600">
+        {{ category.parent.name|default:"—" }}
+    </td>
+
+    <!-- PRODUCTS -->
+    <td class="px-5 py-4">
+        <span class="px-3 py-1 text-xs bg-slate-100 rounded-full">
+            {{ category.products.count }}
+        </span>
+    </td>
+
+    <!-- ACTIONS -->
+    <td class="px-5 py-4 text-right relative">
+
+        <button onclick="toggleMenu('{{ category.id }}')"
+            class="p-2 hover:bg-slate-100 rounded-lg">⋮</button>
+
+        <div id="menu-{{ category.id }}"
+             class="hidden absolute right-5 top-full mt-2 w-40 bg-white border rounded-lg shadow z-50">
+
+            <button class="w-full text-left px-4 py-2 hover:bg-slate-50"
+                onclick="openEditModal(
+                    '{{ category.id }}',
+                    '{{ category.name|escapejs }}',
+                    '{{ category.description|escapejs }}',
+                    '{{ category.parent.id|default:'' }}'
+                )">
+                ✏️ Edit
+            </button>
+
+            <button class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+                onclick="openDeleteModal('{{ category.id }}')">
+                🗑 Delete
+            </button>
+
+        </div>
+
+    </td>
+
+</tr>
+{% endfor %}
+
+</tbody>
+</table>
+
+</div>
+
+<!-- ================= MODAL ================= -->
+<div id="modal" class="fixed inset-0 hidden z-50">
+
+    <!-- BACKDROP -->
+    <div class="absolute inset-0 bg-black/40"></div>
+
+    <!-- CONTENT -->
+    <div class="relative flex items-center justify-center min-h-screen p-4">
+
+        <div class="bg-white w-full max-w-xl rounded-xl shadow-lg relative">
+
+            <!-- CLOSE -->
+            <button onclick="closeModal()"
+                class="absolute top-3 right-3 text-xl text-slate-500 hover:text-red-600">
+                ✕
+            </button>
+
+            <!-- HEADER -->
+            <div class="px-6 py-4 border-b">
+                <h2 id="modalTitle" class="text-lg font-semibold"></h2>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data"
+                  class="p-6 space-y-4">
+
+                {% csrf_token %}
+
+                <input type="hidden" name="action" id="action">
+                <input type="hidden" name="id" id="categoryId">
+
+                <!-- NAME -->
+                <input type="text" name="name" id="name"
+                    class="w-full border px-3 py-2 rounded-lg"
+                    placeholder="Category name">
+
+                <!-- DESCRIPTION -->
+                <textarea name="description" id="description"
+                    class="w-full border px-3 py-2 rounded-lg"
+                    placeholder="Description"></textarea>
+
+                <!-- ================= IMPROVED PARENT SELECT ================= -->
+                <div>
+
+                    <input type="text"
+                        placeholder="Search parent category..."
+                        onkeyup="filterParents(this.value)"
+                        class="w-full border px-3 py-2 rounded-lg mb-2">
+
+                    <div class="border rounded-lg max-h-48 overflow-y-auto p-2 space-y-1">
+
+                        <label class="flex items-center gap-2 p-2 hover:bg-slate-50 rounded">
+                            <input type="radio" name="parent" value="">
+                            <span class="text-sm text-slate-600">— Main Category</span>
+                        </label>
+
+                        {% for cat in categories %}
+                        <label class="flex items-center gap-2 p-2 hover:bg-slate-50 rounded parent-item">
+
+                            <input type="radio" name="parent" value="{{ cat.id }}">
+
+                            <div class="text-sm">
+                                <div class="font-medium">{{ cat.name }}</div>
+                                {% if cat.parent %}
+                                    <div class="text-xs text-slate-400">
+                                        Sub of {{ cat.parent.name }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                        </label>
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+                <!-- IMAGE -->
+                <input type="file" name="img"
+                    class="w-full border px-3 py-2 rounded-lg">
+
+                <!-- ACTION -->
+                <div class="flex justify-end gap-2 pt-4 border-t">
+
+                    <button type="button"
+                        onclick="closeModal()"
+                        class="px-4 py-2 border rounded-lg">
+                        Cancel
+                    </button>
+
+                    <button class="px-4 py-2 bg-slate-900 text-white rounded-lg">
+                        Save
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ================= JS ================= -->
+<script>
+
+const modal = document.getElementById("modal");
+const modalTitle = document.getElementById("modalTitle");
+const action = document.getElementById("action");
+const categoryId = document.getElementById("categoryId");
+
+const nameInput = document.getElementById("name");
+const description = document.getElementById("description");
+
+/* ================= CREATE ================= */
+function openCreateModal() {
+    modal.classList.remove("hidden");
+
+    modalTitle.innerText = "New Category";
+    action.value = "create";
+    categoryId.value = "";
+
+    nameInput.value = "";
+    description.value = "";
+}
+
+/* ================= EDIT ================= */
+function openEditModal(id, name, desc, parentId) {
+    modal.classList.remove("hidden");
+
+    modalTitle.innerText = "Edit Category";
+    action.value = "update";
+    categoryId.value = id;
+
+    nameInput.value = name;
+    description.value = desc;
+
+    document.querySelectorAll("input[name='parent']").forEach(r => {
+        r.checked = (r.value == parentId);
+    });
+}
+
+/* ================= DELETE ================= */
+function openDeleteModal(id) {
+    modal.classList.remove("hidden");
+
+    modalTitle.innerText = "Delete Category";
+    action.value = "delete";
+    categoryId.value = id;
+
+    nameInput.parentElement.classList.add("hidden");
+}
+
+/* ================= CLOSE ================= */
+function closeModal() {
+    modal.classList.add("hidden");
+
+    nameInput.parentElement.classList.remove("hidden");
+}
+
+/* ================= MENU ================= */
+function toggleMenu(id) {
+    const menu = document.getElementById("menu-" + id);
+
+    document.querySelectorAll('[id^="menu-"]').forEach(m => {
+        if (m !== menu) m.classList.add("hidden");
+    });
+
+    menu.classList.toggle("hidden");
+}
+
+/* ================= SEARCH PARENTS ================= */
+function filterParents(value) {
+    document.querySelectorAll(".parent-item").forEach(el => {
+        el.style.display =
+            el.innerText.toLowerCase().includes(value.toLowerCase())
+            ? "flex" : "none";
+    });
+}
+
+/* CLOSE OUTSIDE */
+document.addEventListener("click", function(e) {
+    if (!e.target.closest("button")) {
+        document.querySelectorAll('[id^="menu-"]').forEach(m => m.classList.add("hidden"));
+    }
+});
+
+</script>
+
+{% endblock %}

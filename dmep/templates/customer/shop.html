@@ -1,0 +1,379 @@
+{% extends 'customer/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<main class="max-w-screen-2xl mx-auto px-8 py-12">
+
+  <!-- HEADER -->
+  <header class="mb-12">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+
+      <div>
+        <h1 class="text-5xl font-extrabold mb-2">Shop All</h1>
+        <p class="text-gray-600">Browse our products</p>
+      </div>
+
+      <form method="GET" class="flex items-center gap-2">
+        <input type="text" name="q" value="{{ q }}"
+               placeholder="Search products..."
+               class="bg-gray-100 border-b border-gray-300 px-4 py-2 text-sm focus:outline-none focus:border-blue-500">
+
+        <button class="text-blue-600 font-semibold hover:text-blue-800">
+          Search
+        </button>
+      </form>
+
+    </div>
+  </header>
+
+  <div class="flex flex-col lg:flex-row gap-10">
+
+    <!-- SIDEBAR -->
+    <aside class="w-full lg:w-64">
+      <div class="flex flex-col gap-3">
+
+        <h2 class="font-bold mb-2 text-gray-900">Categories</h2>
+
+        <a href="?q={{ q }}" class="text-sm font-semibold text-gray-700 hover:text-blue-500">
+          All
+        </a>
+
+        {% for cat in categories %}
+        <div>
+
+          <button type="button"
+                  class="w-full text-left text-sm font-semibold text-gray-800 hover:text-blue-600 py-1"
+                  onclick="toggleCat('{{ cat.id }}')">
+            {{ cat.name }}
+          </button>
+
+          <div id="cat-{{ cat.id }}"
+               class="hidden flex flex-col gap-1 ml-4 pl-3 border-l border-gray-200 mt-1">
+
+            {% for sub in cat.subcategories.all %}
+            <a href="?q={{ q }}&category={{ sub.id }}"
+               class="text-xs text-gray-500 hover:text-blue-600 py-1 subcat-link"
+               data-parent="{{ cat.id }}">
+              {{ sub.name }}
+            </a>
+            {% endfor %}
+
+          </div>
+
+        </div>
+        {% endfor %}
+
+      </div>
+    </aside>
+
+    <!-- PRODUCTS -->
+    <section class="flex-1">
+
+      <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+
+        {% for product in products %}
+
+        <div class="group bg-white rounded-xl shadow-sm hover:shadow-lg transition duration-300 overflow-hidden border border-gray-100 relative"
+             onclick="showProduct(this)"
+
+             data-name="{{ product.name }}"
+             data-url="{% url 'cart_add' product.id %}"
+             data-img="{% if product.img and product.img.name %}{{ product.img.url }}{% endif %}"
+             data-final-price="{{ product.final_price }}"
+             data-selling-price="{{ product.selling_price }}"
+             data-discount="{{ product.discount_percent }}"
+             data-unit="{{ product.unit }}"
+             data-status="{{ product.status }}"
+             data-category="{{ product.category.name }}"
+             data-supplier="{{ product.supplier.name }}"
+             data-stock="{{ product.stock_qty }}">
+
+          <div class="aspect-square bg-gray-50 flex items-center justify-center relative">
+
+            {% if product.discount_percent > 0 %}
+              <span class="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10">
+                -{{ product.discount_percent|floatformat:2 }}%
+              </span>
+            {% endif %}
+
+            <img src="{% if product.img and product.img.name %}{{ product.img.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}"
+                 class="w-full h-full object-cover cursor-pointer hover:scale-105 transition duration-300"
+                 alt="{{ product.name }}">
+          </div>
+
+          <button type="button"
+                  class="add-to-cart-btn absolute bottom-3 right-3 bg-white text-gray-800 shadow-md rounded-full w-10 h-10 flex items-center justify-center hover:bg-blue-600 hover:text-white transition"
+                  data-url="{% url 'cart_add' product.id %}"
+                  onclick="event.stopPropagation();">
+            <i class="fas fa-shopping-cart"></i>
+          </button>
+
+          <div class="p-4 flex flex-col gap-1">
+
+            <h3 class="text-sm font-semibold text-gray-800 line-clamp-2">
+              {{ product.name }}
+            </h3>
+
+            <div class="mt-1 text-sm">
+
+              {% if product.discount_percent > 0 %}
+                <span class="text-red-600 font-bold">₱{{ product.final_price|floatformat:2 }}</span>
+                <span class="line-through text-gray-400 ml-2">₱{{ product.selling_price|floatformat:2 }}</span>
+              {% else %}
+                <span class="font-semibold text-gray-800">₱{{ product.selling_price|floatformat:2 }}</span>
+              {% endif %}
+
+            </div>
+
+          </div>
+
+        </div>
+
+        {% empty %}
+          <p class="col-span-full text-gray-500">No products found</p>
+        {% endfor %}
+
+      </div>
+
+      <!-- ================= PAGINATION ================= -->
+      {% if products.has_other_pages %}
+      <div class="mt-10 flex justify-center items-center gap-2">
+
+        {% if products.has_previous %}
+          <a href="?page={{ products.previous_page_number }}&q={{ q }}{% if selected_category %}&category={{ selected_category }}{% endif %}"
+             class="px-4 py-2 text-sm border rounded-lg hover:bg-gray-100">
+            Prev
+          </a>
+        {% endif %}
+
+        {% for num in products.paginator.page_range %}
+          {% if products.number == num %}
+            <span class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg">
+              {{ num }}
+            </span>
+          {% else %}
+            <a href="?page={{ num }}&q={{ q }}{% if selected_category %}&category={{ selected_category }}{% endif %}"
+               class="px-4 py-2 text-sm border rounded-lg hover:bg-gray-100">
+              {{ num }}
+            </a>
+          {% endif %}
+        {% endfor %}
+
+        {% if products.has_next %}
+          <a href="?page={{ products.next_page_number }}&q={{ q }}{% if selected_category %}&category={{ selected_category }}{% endif %}"
+             class="px-4 py-2 text-sm border rounded-lg hover:bg-gray-100">
+            Next
+          </a>
+        {% endif %}
+
+      </div>
+      {% endif %}
+
+    </section>
+  </div>
+</main>
+
+<!-- ================= MODAL ================= -->
+<div id="productModal"
+     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-sm flex">
+
+  <div class="bg-white rounded-3xl overflow-hidden shadow-2xl relative max-w-5xl w-full mx-4">
+
+    <button onclick="closeModal()"
+            class="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-white/80 hover:bg-gray-100 text-gray-600 hover:text-black shadow">
+      ✕
+    </button>
+
+    <div class="grid grid-cols-1 md:grid-cols-2">
+
+      <div class="bg-gray-50 flex items-center justify-center p-10">
+        <img id="modalProductImage" class="max-h-[450px] object-contain">
+      </div>
+
+      <div class="p-10 flex flex-col justify-between">
+
+        <div>
+          <p class="text-xs text-gray-400 uppercase tracking-widest">
+            <span id="modalCategory"></span>
+            <span id="modalSupplier"></span>
+          </p>
+
+          <h2 id="modalProductName" class="text-3xl font-bold mt-2"></h2>
+
+          <div id="modalPriceWrapper" class="mt-5 text-xl font-semibold text-blue-600"></div>
+
+          <div class="mt-6 text-sm">
+            Stock: <span id="modalStockQty"></span> <span id="modalUnit1"></span>
+          </div>
+
+          <div class="mt-2 text-sm">
+            Status: <span id="modalStatus"></span>
+          </div>
+
+        </div>
+
+        <button id="modalAddToCart"
+                type="button"
+                class="mt-10 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold">
+          Add to Cart
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= FULL JS (UNCHANGED) ================= -->
+<script>
+let cartIcon;
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    cartIcon = document.getElementById("cartIcon");
+
+    const modalBtn = document.getElementById("modalAddToCart");
+
+    if (modalBtn) {
+        modalBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+
+            const url = this.dataset.url;
+            if (!url) return;
+
+            const img = document.getElementById("modalProductImage");
+            const rect = img.getBoundingClientRect();
+
+            addToCart(url, img.src, rect.left, rect.top);
+        });
+    }
+
+    const modal = document.getElementById("productModal");
+    if (modal) {
+        modal.addEventListener("click", (e) => {
+            if (e.target.id === "productModal") {
+                closeModal();
+            }
+        });
+    }
+
+    document.querySelectorAll(".add-to-cart-btn").forEach(btn => {
+        btn.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const url = this.dataset.url;
+            const card = this.closest("[data-img]");
+            const imgSrc = card?.dataset.img;
+
+            const rect = this.getBoundingClientRect();
+
+            addToCart(url, imgSrc, rect.left, rect.top);
+        });
+    });
+
+});
+
+function toggleCat(id) {
+    const el = document.getElementById(`cat-${id}`);
+    document.querySelectorAll('[id^="cat-"]').forEach(i => {
+        if (i.id !== `cat-${id}`) i.classList.add('hidden');
+    });
+    el.classList.toggle('hidden');
+}
+
+async function addToCart(url, imgSrc, x, y) {
+
+    flyToCart(imgSrc, x, y);
+
+    const res = await fetch(url, {
+        method: "GET",
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    });
+
+    const data = await res.json();
+
+    if (!cartIcon) return;
+
+    let badge = cartIcon.querySelector("span");
+
+    if (!badge) {
+        badge = document.createElement("span");
+        badge.className =
+            "absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full";
+        cartIcon.appendChild(badge);
+    }
+
+    badge.innerText = data.cart_count;
+}
+
+function flyToCart(imgSrc, x, y) {
+
+    if (!imgSrc) return;
+
+    const img = document.createElement("img");
+    img.src = imgSrc;
+    document.body.appendChild(img);
+
+    const cart = cartIcon?.getBoundingClientRect();
+    if (!cart) return;
+
+    img.style.position = "fixed";
+    img.style.left = x + "px";
+    img.style.top = y + "px";
+    img.style.width = "60px";
+    img.style.height = "60px";
+    img.style.transition = "all 0.8s ease-in-out";
+    img.style.zIndex = "9999";
+
+    setTimeout(() => {
+        img.style.left = cart.left + "px";
+        img.style.top = cart.top + "px";
+        img.style.width = "20px";
+        img.style.height = "20px";
+        img.style.opacity = "0.3";
+    }, 10);
+
+    setTimeout(() => img.remove(), 850);
+}
+
+function showProduct(card) {
+
+    const modal = document.getElementById("productModal");
+
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+
+    document.getElementById("modalProductName").innerText = card.dataset.name;
+    document.getElementById("modalProductImage").src = card.dataset.img;
+
+    document.getElementById("modalCategory").innerText = card.dataset.category || "";
+    document.getElementById("modalSupplier").innerText = card.dataset.supplier || "";
+    document.getElementById("modalStockQty").innerText = card.dataset.stock || "";
+    document.getElementById("modalUnit1").innerText = card.dataset.unit || "";
+    document.getElementById("modalStatus").innerText = card.dataset.status || "";
+
+    let priceHTML = "";
+
+    if (card.dataset.discount > 0) {
+        priceHTML = `
+            <span class="text-red-600 font-bold">₱${parseFloat(card.dataset.finalPrice).toFixed(2)}</span>
+            <span class="line-through text-gray-400 ml-2">₱${parseFloat(card.dataset.sellingPrice).toFixed(2)}</span>
+        `;
+    } else {
+        priceHTML = `<span class="font-bold">₱${parseFloat(card.dataset.sellingPrice).toFixed(2)}</span>`;
+    }
+
+    document.getElementById("modalPriceWrapper").innerHTML = priceHTML;
+
+    document.getElementById("modalAddToCart").dataset.url = card.dataset.url;
+}
+
+function closeModal() {
+    document.getElementById("productModal").classList.add("hidden");
+}
+</script>
+
+{% endblock %}

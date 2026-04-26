@@ -1,0 +1,136 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>POS System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .nav-link { transition: all 0.15s ease; }
+        .nav-link.active {
+            background: rgba(129, 140, 248, 0.15);
+            color: #a5b4fc;
+        }
+        .nav-link:not(.active):hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #cbd5e1;
+        }
+        .sidebar-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #818cf8;
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-100 text-slate-800 flex min-h-screen">
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="w-56 bg-slate-900 text-slate-300 flex flex-col fixed top-0 left-0 h-full z-50">
+
+    <!-- Brand -->
+    <div class="px-5 py-5 border-b border-white/[0.07]">
+        <div class="flex items-center gap-2.5">
+            <span class="sidebar-dot"></span>
+            <h1 class="text-sm font-semibold text-white tracking-wide">POS System</h1>
+        </div>
+        <p class="text-xs text-slate-500 mt-1 pl-[18px]">Cashier Panel</p>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 px-3 py-4 flex flex-col gap-0.5">
+
+        <p class="text-[10px] uppercase tracking-widest text-slate-500 px-3 pt-1 pb-2">Main</p>
+
+        <a href="{% url 'pos_dashboard' %}"
+           class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400">
+            <i class="fa-solid fa-gauge w-4 text-center text-sky-400 text-xs"></i>
+            Dashboard
+        </a>
+        
+        <a href="{% url 'pos_sell' %}"
+           class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400">
+            <i class="fa-solid fa-gauge w-4 text-center text-sky-400 text-xs"></i>
+            Sells
+        </a>
+
+
+        <a href="{% url 'pos_cart' %}"
+           class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400">
+            <i class="fa-solid fa-cart-shopping w-4 text-center text-indigo-400 text-xs"></i>
+            Cart
+            {% if request.session.cart %}
+            <span class="ml-auto bg-indigo-500/20 text-indigo-300 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                {{ request.session.cart|length }}
+            </span>
+            {% endif %}
+        </a>
+
+        <a href="{% url 'pos_checkout' %}"
+           class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400">
+            <i class="fa-solid fa-credit-card w-4 text-center text-emerald-400 text-xs"></i>
+            Checkout
+        </a>
+
+    </nav>
+
+    <!-- User -->
+    <div class="border-t border-white/[0.07] p-4">
+        <div class="flex items-center gap-3 mb-3">
+            <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-semibold shrink-0">
+                {{ request.session.username|slice:":1"|upper }}
+            </div>
+            <div class="min-w-0">
+                <p class="text-sm text-white font-medium truncate">{{ request.session.username }}</p>
+                <p class="text-xs text-slate-500">Cashier</p>
+            </div>
+        </div>
+
+        <a href="{% url 'logout' %}"
+           class="flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 hover:text-red-300 py-2 rounded-lg text-xs font-medium transition">
+            <i class="fa-solid fa-right-from-bracket text-xs"></i>
+            Logout
+        </a>
+    </div>
+
+</aside>
+
+<!-- ═══ MAIN AREA ═══ -->
+<div class="flex-1 flex flex-col ml-56">
+
+    <!-- Top Header -->
+    <header class="sticky top-0 z-40 bg-white border-b border-slate-200 px-6 py-3.5 flex justify-between items-center">
+        <h2 class="font-semibold text-slate-800">
+            {% block title %}Dashboard{% endblock %}
+        </h2>
+        <div class="text-xs text-slate-400 flex items-center gap-2">
+            <i class="fa-regular fa-calendar"></i>
+            {% now "M d, Y" %}
+        </div>
+    </header>
+
+    <!-- Content -->
+    <main class="flex-1 p-6">
+
+        {% if messages %}
+            {% for message in messages %}
+            <div class="mb-5 px-4 py-3 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-2 text-sm">
+                <i class="fa-solid fa-circle-check shrink-0"></i>
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+
+    </main>
+
+</div>
+
+</body>
+{% block extra_js %}{% endblock %}
+</html>

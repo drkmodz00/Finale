@@ -1,0 +1,140 @@
+{% extends 'panel/base.html' %}
+
+{% block content %}
+
+<!-- HEADER -->
+<div class="mb-6">
+    <h1 class="text-2xl font-semibold text-slate-800">Sales Dashboard</h1>
+    <p class="text-sm text-slate-400">Overview of revenue, orders, and performance</p>
+</div>
+
+<!-- SUMMARY CARDS -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+
+    <div class="bg-white p-4 rounded-xl border">
+        <p class="text-xs text-slate-400">Total Revenue</p>
+        <p class="text-xl font-semibold">₱{{ total_sales|default:"0.00" }}</p>
+    </div>
+
+    <div class="bg-white p-4 rounded-xl border">
+        <p class="text-xs text-slate-400">Total Orders</p>
+        <p class="text-xl font-semibold">{{ total_orders }}</p>
+    </div>
+
+    <div class="bg-white p-4 rounded-xl border">
+        <p class="text-xs text-slate-400">Avg Order Value</p>
+        <p class="text-xl font-semibold">₱{{ avg_order|floatformat:2 }}</p>
+    </div>
+
+    <div class="bg-white p-4 rounded-xl border">
+        <p class="text-xs text-slate-400">Today's Sales</p>
+        <p class="text-xl font-semibold text-emerald-600">
+            ₱{{ today_sales|default:"0.00" }}
+        </p>
+    </div>
+
+</div>
+
+<!-- INSIGHTS -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+
+    <div class="bg-slate-50 p-4 rounded-xl border">
+        <p class="text-xs text-slate-500">Top Product</p>
+        <p class="font-semibold text-slate-800">
+            {{ top_product|default:"No data" }}
+        </p>
+    </div>
+
+    <div class="bg-slate-50 p-4 rounded-xl border">
+        <p class="text-xs text-slate-500">Pending Orders</p>
+        <p class="font-semibold text-amber-600">{{ pending_orders }}</p>
+    </div>
+
+    <div class="bg-slate-50 p-4 rounded-xl border">
+        <p class="text-xs text-slate-500">Cancelled Orders</p>
+        <p class="font-semibold text-red-500">{{ cancelled_orders }}</p>
+    </div>
+
+</div>
+
+<!-- TABLE -->
+<div class="bg-white border rounded-xl overflow-hidden">
+
+<table class="w-full text-sm">
+
+    <thead class="bg-slate-900 text-white text-xs uppercase">
+        <tr>
+            <th class="p-3 text-left">Order</th>
+            <th class="p-3 text-left">Customer</th>
+            <th class="p-3 text-left">Products</th>
+            <th class="p-3 text-left">Category</th>
+            <th class="p-3 text-left">Status</th>
+            <th class="p-3 text-left">Amount</th>
+            <th class="p-3 text-left">Date</th>
+            <th class="p-3 text-left">Action</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        {% for sale in sales %}
+        <tr class="border-b hover:bg-slate-50">
+
+            <td class="p-3 font-medium">#{{ sale.id }}</td>
+
+            <td class="p-3">{{ sale.customer.full_name|default:"Walk-in" }}</td>
+
+            <td class="p-3 text-slate-500">
+                {% for item in sale.sale_items.all %}
+                    {{ item.product.name }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </td>
+
+            <td class="p-3 text-slate-500">
+                {% for item in sale.sale_items.all %}
+                    {{ item.product.category.name|default:"Uncategorized" }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </td>
+
+            <!-- STATUS -->
+            <td class="p-3">
+                {% if sale.status == "processing" %}
+                    <span class="text-amber-600 font-medium">Processing</span>
+                {% elif sale.status == "completed" %}
+                    <span class="text-emerald-600 font-medium">Completed</span>
+                {% else %}
+                    <span class="text-red-500 font-medium">{{ sale.status|title }}</span>
+                {% endif %}
+            </td>
+
+            <td class="p-3 font-semibold">₱{{ sale.total_amount }}</td>
+
+            <td class="p-3 text-slate-500">{{ sale.sale_date|date:"Y-m-d" }}</td>
+
+            <td class="p-3">
+                <form method="POST" action="{% url 'sale_delete' sale.id %}">
+                    {% csrf_token %}
+                    <button class="text-red-600 hover:underline"
+                            onclick="return confirm('Delete this sale?')">
+                        🗑
+                    </button>
+                </form>
+            </td>
+
+        </tr>
+
+        {% empty %}
+        <tr>
+            <td colspan="8" class="text-center p-6 text-slate-400">
+                No sales found
+            </td>
+        </tr>
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,187 @@
+{% extends 'customer/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="max-w-5xl mx-auto px-4 py-10">
+
+  <!-- HEADER -->
+  <div class="text-center mb-10">
+    <h1 class="text-3xl font-bold text-gray-900">Help Center</h1>
+    <p class="text-sm text-gray-500 mt-2">
+      Find answers about orders, shipping, and returns
+    </p>
+  </div>
+
+
+  <!-- QUICK NAV (Shopee-style category jump) -->
+  <div class="flex flex-wrap justify-center gap-2 mb-8">
+
+    <a href="#contact"
+       class="px-4 py-2 text-sm rounded-full bg-gray-100 hover:bg-blue-600 hover:text-white transition">
+      Contact
+    </a>
+
+    <a href="#shipping"
+       class="px-4 py-2 text-sm rounded-full bg-gray-100 hover:bg-blue-600 hover:text-white transition">
+      Shipping
+    </a>
+
+    <a href="#returns"
+       class="px-4 py-2 text-sm rounded-full bg-gray-100 hover:bg-blue-600 hover:text-white transition">
+      Returns
+    </a>
+
+  </div>
+
+
+  <div class="space-y-6">
+
+    <!-- CONTACT -->
+    <section id="contact"
+      class="bg-white border rounded-xl p-6 shadow-sm scroll-mt-24">
+
+      <div class="flex items-center gap-3 mb-5">
+
+        <span class="iconify text-2xl text-blue-600"
+              data-icon="mdi:headset"></span>
+
+        <div>
+          <h2 class="text-lg font-semibold">Contact Support</h2>
+          <p class="text-xs text-gray-500">We’re here to help you</p>
+        </div>
+
+      </div>
+
+      <div class="divide-y text-sm">
+
+        <div class="flex justify-between py-3">
+          <span class="text-gray-500">Email</span>
+          <span class="font-medium text-gray-900">
+            {{ help.email|default:"support@dmep.com" }}
+          </span>
+        </div>
+
+        <div class="flex justify-between py-3">
+          <span class="text-gray-500">Phone</span>
+          <span class="font-medium text-gray-900">
+            {{ help.phone|default:"+63 9XX XXX XXXX" }}
+          </span>
+        </div>
+
+        <div class="flex justify-between py-3">
+          <span class="text-gray-500">Response Time</span>
+          <span class="font-medium text-gray-900">
+            {{ help.response_time|default:"24–48 hours" }}
+          </span>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- SHIPPING -->
+    <section id="shipping"
+      class="bg-white border rounded-xl p-6 shadow-sm scroll-mt-24">
+
+      <div class="flex items-center gap-3 mb-5">
+
+        <span class="iconify text-2xl text-green-600"
+              data-icon="mdi:truck-delivery"></span>
+
+        <div>
+          <h2 class="text-lg font-semibold">Shipping Information</h2>
+          <p class="text-xs text-gray-500">Delivery timelines & processing</p>
+        </div>
+
+      </div>
+
+      <ul class="text-sm space-y-3 text-gray-700">
+
+        <li class="flex items-start gap-2">
+          <span class="text-green-500 mt-0.5">•</span>
+          Processing time:
+          <span class="font-medium ml-1">
+            {{ help.shipping_processing|default:"1–2 business days" }}
+          </span>
+        </li>
+
+        <li class="flex items-start gap-2">
+          <span class="text-green-500 mt-0.5">•</span>
+          Metro Manila:
+          <span class="font-medium ml-1">
+            {{ help.shipping_metro|default:"2–5 days" }}
+          </span>
+        </li>
+
+        <li class="flex items-start gap-2">
+          <span class="text-green-500 mt-0.5">•</span>
+          Provincial:
+          <span class="font-medium ml-1">
+            {{ help.shipping_provincial|default:"3–10 days" }}
+          </span>
+        </li>
+
+      </ul>
+
+    </section>
+
+
+    <!-- RETURNS -->
+    <section id="returns"
+      class="bg-white border rounded-xl p-6 shadow-sm scroll-mt-24">
+
+      <div class="flex items-center gap-3 mb-5">
+
+        <span class="iconify text-2xl text-red-500"
+              data-icon="mdi:backup-restore"></span>
+
+        <div>
+          <h2 class="text-lg font-semibold">Returns & Refunds</h2>
+          <p class="text-xs text-gray-500">Easy return policy</p>
+        </div>
+
+      </div>
+
+      <ul class="text-sm space-y-3 text-gray-700">
+
+        <li class="flex items-start gap-2">
+          <span class="text-red-500 mt-0.5">•</span>
+          Return within
+          <span class="font-medium ml-1">
+            {{ help.returns_days|default:7 }} days
+          </span>
+        </li>
+
+        <li class="flex items-start gap-2">
+          <span class="text-red-500 mt-0.5">•</span>
+          Refund time:
+          <span class="font-medium ml-1">
+            {{ help.refund_time|default:"3–5 business days" }}
+          </span>
+        </li>
+
+        <li class="flex items-start gap-2">
+          <span class="text-red-500 mt-0.5">•</span>
+
+          {% if help and help.shipping_refundable %}
+            Shipping fees are <span class="font-semibold ml-1">refundable</span>
+          {% else %}
+            Shipping fees are <span class="font-semibold ml-1">non-refundable</span> (unless defective)
+          {% endif %}
+
+        </li>
+
+      </ul>
+
+    </section>
+
+  </div>
+
+</div>
+
+<!-- ICONIFY -->
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+
+{% endblock %}

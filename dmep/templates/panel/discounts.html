@@ -1,0 +1,301 @@
+{% extends 'panel/base.html' %}
+{% block content %}
+
+<!-- ================= HEADER ================= -->
+<div class="flex justify-between items-start mb-6">
+
+    <div>
+        <h1 class="text-2xl font-semibold text-slate-800">Discount Management</h1>
+        <p class="text-sm text-slate-400">Manage category and product discounts</p>
+    </div>
+
+    <button onclick="openModal('create')"
+        class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm">
+        + Add Discount
+    </button>
+
+</div>
+
+<!-- ================= STATS ================= -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+
+    <div class="bg-white border rounded-xl p-4">
+        <p class="text-xs text-slate-400">Total</p>
+        <p class="text-xl font-bold">{{ discounts|length }}</p>
+    </div>
+
+    <div class="bg-white border rounded-xl p-4">
+        <p class="text-xs text-slate-400">Active</p>
+        <p class="text-xl font-bold text-green-600">{{ active_count }}</p>
+    </div>
+
+    <div class="bg-white border rounded-xl p-4">
+        <p class="text-xs text-slate-400">Expired</p>
+        <p class="text-xl font-bold text-red-500">{{ expired_count }}</p>
+    </div>
+
+</div>
+
+<!-- ================= TABLE ================= -->
+<div class="bg-white border rounded-xl overflow-hidden">
+
+<table class="w-full text-sm">
+
+<thead class="bg-slate-900 text-white text-xs uppercase">
+<tr>
+    <th class="px-4 py-3 text-left">Name</th>
+    <th class="px-4 py-3 text-left">Type</th>
+    <th class="px-4 py-3 text-left">Value</th>
+    <th class="px-4 py-3 text-left">Scope</th>
+    <th class="px-4 py-3 text-left">Status</th>
+    <th class="px-4 py-3 text-left">Action</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for d in discounts %}
+<tr class="border-b hover:bg-slate-50">
+
+    <td class="px-4 py-3 font-medium">{{ d.name }}</td>
+
+    <td class="px-4 py-3 capitalize">{{ d.type }}</td>
+
+    <td class="px-4 py-3">{{ d.value }}</td>
+
+    <!-- ================= SCOPE ================= -->
+    <td class="px-4 py-3">
+
+        {% if d.applies_to == "all" %}
+            <span class="text-slate-500">All Products</span>
+
+        {% elif d.applies_to == "category" %}
+            {% for c in d.categories.all %}
+                <span class="px-2 py-1 bg-slate-100 rounded text-xs">
+                    {{ c.name }}
+                </span>
+            {% empty %}
+                —
+            {% endfor %}
+
+        {% elif d.applies_to == "product" %}
+            {% for p in d.products.all %}
+                <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
+                    {{ p.name }}
+                </span>
+            {% empty %}
+                —
+            {% endfor %}
+        {% else %}
+            —
+        {% endif %}
+
+    </td>
+
+    <!-- STATUS -->
+    <td class="px-4 py-3">
+        <span class="px-2 py-1 text-xs rounded
+            {% if d.status == 'active' %}
+                bg-green-100 text-green-700
+            {% elif d.status == 'expired' %}
+                bg-red-100 text-red-700
+            {% else %}
+                bg-gray-100 text-gray-600
+            {% endif %}">
+            {{ d.status|title }}
+        </span>
+    </td>
+
+    <!-- ACTION -->
+    <td class="px-4 py-3 flex gap-3">
+
+        <button onclick="openEdit(
+            '{{ d.id }}',
+            '{{ d.name|escapejs }}',
+            '{{ d.type }}',
+            '{{ d.value }}',
+            '{{ d.applies_to }}',
+            '{{ d.status }}'
+        )"
+        class="text-blue-600 hover:text-blue-800">
+            ✏️
+        </button>
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{ d.id }}">
+
+            <button onclick="return confirm('Delete this discount?')"
+                class="text-red-600 hover:text-red-800">
+                🗑
+            </button>
+        </form>
+
+    </td>
+
+</tr>
+
+{% empty %}
+<tr>
+    <td colspan="6" class="text-center py-10 text-slate-400">
+        No discounts found
+    </td>
+</tr>
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+<!-- ================= MODAL ================= -->
+<div id="modal" class="hidden fixed inset-0 z-50">
+
+<div class="absolute inset-0 bg-black/50"></div>
+
+<div class="relative flex items-center justify-center min-h-screen p-4">
+
+<form method="post"
+      class="bg-white w-full max-w-lg rounded-xl shadow border">
+
+    {% csrf_token %}
+
+    <!-- HEADER -->
+    <div class="flex justify-between p-4 border-b">
+        <h2 class="font-semibold">Discount</h2>
+        <button type="button" onclick="closeModal()">✕</button>
+    </div>
+
+    <!-- BODY -->
+    <div class="p-4 space-y-3">
+
+        <input type="hidden" name="action" id="action">
+        <input type="hidden" name="id" id="id">
+
+        <input id="name" name="name"
+            placeholder="Name"
+            class="w-full border p-2 rounded">
+
+        <select id="type" name="type"
+            class="w-full border p-2 rounded">
+            <option value="percentage">Percentage</option>
+            <option value="fixed">Fixed</option>
+        </select>
+
+        <input id="value" name="value"
+            placeholder="Value"
+            class="w-full border p-2 rounded">
+
+        <!-- APPLY TO -->
+        <select id="applies_to" name="applies_to"
+            class="w-full border p-2 rounded"
+            onchange="toggleScope()">
+
+            <option value="all">All Products</option>
+            <option value="category">Category</option>
+            <option value="product">Product</option>
+
+        </select>
+
+        <!-- CATEGORY -->
+        <select id="category" name="category"
+            class="w-full border p-2 rounded hidden">
+            <option value="">Select Category</option>
+            {% for c in categories %}
+                {% if not c.parent %}
+                    <option value="{{ c.id }}">{{ c.name }}</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+
+        <!-- PRODUCTS -->
+        <select id="products" name="products"
+            class="w-full border p-2 rounded hidden"
+            multiple>
+
+            {% for p in products %}
+                <option value="{{ p.id }}">{{ p.name }}</option>
+            {% endfor %}
+
+        </select>
+
+        <!-- STATUS -->
+        <select id="status" name="status"
+            class="w-full border p-2 rounded">
+
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="expired">Expired</option>
+
+        </select>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="flex justify-end gap-2 p-4 border-t">
+
+        <button type="button"
+            onclick="closeModal()"
+            class="px-3 py-2 border rounded">
+            Cancel
+        </button>
+
+        <button class="px-3 py-2 bg-slate-900 text-white rounded">
+            Save
+        </button>
+
+    </div>
+
+</form>
+
+</div>
+</div>
+
+<!-- ================= JS ================= -->
+<script>
+
+function openModal(action) {
+    document.getElementById("modal").classList.remove("hidden");
+    document.getElementById("action").value = action;
+}
+
+function closeModal() {
+    document.getElementById("modal").classList.add("hidden");
+
+    document.getElementById("category").classList.add("hidden");
+    document.getElementById("products").classList.add("hidden");
+}
+
+function openEdit(id, name, type, value, applies_to, status) {
+
+    openModal("update");
+
+    document.getElementById("id").value = id;
+    document.getElementById("name").value = name;
+    document.getElementById("type").value = type;
+    document.getElementById("value").value = value;
+    document.getElementById("applies_to").value = applies_to;
+    document.getElementById("status").value = status;
+
+    toggleScope();
+}
+
+function toggleScope() {
+
+    let v = document.getElementById("applies_to").value;
+
+    let category = document.getElementById("category");
+    let products = document.getElementById("products");
+
+    category.classList.add("hidden");
+    products.classList.add("hidden");
+
+    if (v === "category") category.classList.remove("hidden");
+    if (v === "product") products.classList.remove("hidden");
+}
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "cashier/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="mb-7">
+    <h2 class="text-xl font-semibold text-slate-800">POS Dashboard</h2>
+    <p class="text-sm text-slate-400 mt-1">Real-time cashier performance overview</p>
+</div>
+
+<!-- STATS GRID -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+
+    <!-- CART -->
+    <div class="bg-white border rounded-xl p-5">
+        <p class="text-xs text-slate-400 uppercase">Cart Items</p>
+        <p class="text-3xl font-bold text-indigo-600 mt-2">
+            {{ cart_count }}
+        </p>
+    </div>
+
+    <!-- PRODUCTS -->
+    <div class="bg-white border rounded-xl p-5">
+        <p class="text-xs text-slate-400 uppercase">Products</p>
+        <p class="text-3xl font-bold text-slate-800 mt-2">
+            {{ product_count }}
+        </p>
+    </div>
+
+    <!-- TODAY SALES -->
+    <div class="bg-white border rounded-xl p-5">
+        <p class="text-xs text-slate-400 uppercase">Today's Sales</p>
+        <p class="text-3xl font-bold text-emerald-600 mt-2">
+            ₱{{ total_sales|default:"0.00" }}
+        </p>
+    </div>
+
+    <!-- TRANSACTIONS -->
+    <div class="bg-white border rounded-xl p-5">
+        <p class="text-xs text-slate-400 uppercase">Transactions</p>
+        <p class="text-3xl font-bold text-sky-600 mt-2">
+            {{ transaction_count }}
+        </p>
+    </div>
+
+    <!-- TOTAL REVENUE -->
+    <div class="bg-white border rounded-xl p-5">
+        <p class="text-xs text-slate-400 uppercase">Total Revenue</p>
+        <p class="text-3xl font-bold text-purple-600 mt-2">
+            ₱{{ total_revenue|default:"0.00" }}
+        </p>
+    </div>
+
+    <!-- LOW STOCK -->
+    <div class="bg-white border rounded-xl p-5">
+        <p class="text-xs text-slate-400 uppercase">Low Stock Items</p>
+        <p class="text-3xl font-bold text-red-500 mt-2">
+            {{ low_stock }}
+        </p>
+    </div>
+
+</div>
+
+<!-- ACTION PANEL -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+    <!-- QUICK ACTIONS -->
+    <div class="bg-white border rounded-xl p-5">
+        <h3 class="font-semibold mb-4">Quick Actions</h3>
+
+        <a href="{% url 'pos_dashboard' %}"
+           class="block bg-indigo-600 text-white text-center py-2 rounded-lg mb-2 hover:bg-indigo-700">
+            Start Selling
+        </a>
+
+        <a href="{% url 'pos_cart' %}"
+           class="block bg-slate-800 text-white text-center py-2 rounded-lg hover:bg-slate-900">
+            View Cart
+        </a>
+    </div>
+
+    <!-- INSIGHTS -->
+    <div class="lg:col-span-2 bg-white border rounded-xl p-5">
+        <h3 class="font-semibold mb-4">System Insights</h3>
+
+        <ul class="space-y-2 text-sm text-slate-500">
+            <li>✔ Monitor low stock to avoid missing sales</li>
+            <li>✔ Track daily sales performance</li>
+            <li>✔ Ensure checkout flow is smooth</li>
+        </ul>
+    </div>
+
+</div>
+
+{% endblock %}
