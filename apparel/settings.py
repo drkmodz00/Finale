@@ -5,12 +5,15 @@ import dj_database_url
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+
 # ──────────────────────────────────────────────
 # BASE DIRECTORY
 # ──────────────────────────────────────────────
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(dotenv_path=BASE_DIR / ".env")
+
+print("DATABASE_URL =", os.environ.get("DATABASE_URL"))
 
 # ──────────────────────────────────────────────
 # SECURITY
@@ -98,14 +101,19 @@ WSGI_APPLICATION = 'apparel.wsgi.application'
 # ──────────────────────────────────────────────
 # DATABASE
 # ──────────────────────────────────────────────
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise Exception("❌ DATABASE_URL is missing (Vercel env not loaded)")
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
+        default=DATABASE_URL,
         conn_max_age=600,
         ssl_require=True
     )
 }
+
     # ──────────────────────────────────────────────
 # PASSWORD VALIDATION
 # ──────────────────────────────────────────────
