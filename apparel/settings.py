@@ -1,17 +1,20 @@
 """
 Django settings for morado_project.
 """
-import dj_database_url
+
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-from django.db import connection
+import dj_database_url
+
 # ──────────────────────────────────────────────
 # BASE DIRECTORY
 # ──────────────────────────────────────────────
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(dotenv_path=BASE_DIR / ".env")
+
+# load env FIRST
+load_dotenv(BASE_DIR / ".env")
 
 # ──────────────────────────────────────────────
 # SECURITY
@@ -19,17 +22,15 @@ load_dotenv(dotenv_path=BASE_DIR / ".env")
 
 SECRET_KEY = 'django-insecure-change-this-in-production-use-env-variable'
 
-DEBUG = True  # Set to False in production
+DEBUG = True
 
-ALLOWED_HOSTS = ['*']  # Restrict to your domain in production
-
+ALLOWED_HOSTS = ["*"]
 
 # ──────────────────────────────────────────────
 # APPLICATIONS
 # ──────────────────────────────────────────────
 
 INSTALLED_APPS = [
-    # Django built-ins
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -37,10 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # Your app
     'dmep',
 ]
-
 
 # ──────────────────────────────────────────────
 # MIDDLEWARE
@@ -48,7 +47,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',   # serves static files in production
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -57,13 +57,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
 # ──────────────────────────────────────────────
-# URL CONFIGURATION
+# URLS
 # ──────────────────────────────────────────────
 
 ROOT_URLCONF = 'apparel.urls'
-
 
 # ──────────────────────────────────────────────
 # TEMPLATES
@@ -72,10 +70,8 @@ ROOT_URLCONF = 'apparel.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            BASE_DIR / 'templates',   # project-level templates folder
-        ],
-        'APP_DIRS': True,             # also loads from dmep/templates/
+        'DIRS': [BASE_DIR / 'templates'],
+        'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'dmep.context_processors.cart_count',
@@ -88,27 +84,29 @@ TEMPLATES = [
     },
 ]
 
-
 # ──────────────────────────────────────────────
 # WSGI
 # ──────────────────────────────────────────────
 
 WSGI_APPLICATION = 'apparel.wsgi.application'
 
-
 # ──────────────────────────────────────────────
-# DATABASE
+# DATABASE (FIXED - SUPABASE READY)
 # ──────────────────────────────────────────────
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise Exception("❌ DATABASE_URL is missing")
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=DATABASE_URL,
+    "default": dj_database_url.parse(
+        DATABASE_URL.strip(),
         conn_max_age=600,
     )
 }
-    # ──────────────────────────────────────────────
+
+# ──────────────────────────────────────────────
 # PASSWORD VALIDATION
 # ──────────────────────────────────────────────
 
@@ -119,46 +117,34 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-
 # ──────────────────────────────────────────────
 # INTERNATIONALIZATION
 # ──────────────────────────────────────────────
 
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'Asia/Manila'   # Philippine Standard Time
+TIME_ZONE = 'Asia/Manila'
 USE_I18N = True
 USE_TZ = True
-
 
 # ──────────────────────────────────────────────
 # STATIC FILES
 # ──────────────────────────────────────────────
 
-# URL to access static files in the browser
 STATIC_URL = '/static/'
-
-# Where Django collects all static files when you run `collectstatic`
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Additional locations Django looks for static files (beyond app/static/ folders)
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',   # project-level static folder
+    BASE_DIR / 'static',
 ]
 
-# WhiteNoise compression & caching (used in production)
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-
 # ──────────────────────────────────────────────
-# MEDIA FILES (user-uploaded files)
+# MEDIA FILES
 # ──────────────────────────────────────────────
 
-# URL to access uploaded media in the browser
 MEDIA_URL = '/media/'
-
-# Where uploaded files are saved on disk
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # ──────────────────────────────────────────────
 # DEFAULT PRIMARY KEY
@@ -166,24 +152,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
 # ──────────────────────────────────────────────
-# MESSAGES (flash messages framework)
-# ──────────────────────────────────────────────
-
-from django.contrib.messages import constants as message_constants
-
-MESSAGE_TAGS = {
-    message_constants.DEBUG:   'secondary',
-    message_constants.INFO:    'info',
-    message_constants.SUCCESS: 'success',
-    message_constants.WARNING: 'warning',
-    message_constants.ERROR:   'danger',
-}
-
-
-# ──────────────────────────────────────────────
-# LOGIN / LOGOUT REDIRECTS
+# LOGIN SETTINGS
 # ──────────────────────────────────────────────
 
 LOGIN_URL = '/login/'
