@@ -108,7 +108,7 @@ def product_list(request):
         "selected_category": selected_category,
         "active_parent_id": active_parent_id,
     })
-    
+
 def product_detail(request, pk):
     product = get_object_or_404(Product, pk=pk)
 
@@ -166,7 +166,7 @@ def cart_view(request):
         cart_items.append({
             "key": pid,
             "name": product.name,
-            "image": product.img.url if product.img and product.img.name else None,
+            "image": product.image_url if product.img and product.img.name else None,
             "price": final_price,
             "qty": qty,
             "total": line_final,

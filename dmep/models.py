@@ -21,8 +21,7 @@ class Profile(models.Model):
 class Category(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
-    img = models.ImageField(upload_to='categories/', blank=True, null=True)
-
+    image_url = models.URLField(blank=True, null=True)
     parent = models.ForeignKey(
         'self',
         on_delete=models.CASCADE,
@@ -90,8 +89,7 @@ class Product(models.Model):
     reorder_level = models.IntegerField(blank=True, null=True)
     unit = models.CharField(max_length=50, blank=True, null=True)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, blank=True, null=True)
-    img = models.ImageField(upload_to='products/', blank=True, null=True, default="products/default.jpg")
-    
+    image_url = models.URLField(blank=True, null=True)    
     def __str__(self):
         return self.name
  

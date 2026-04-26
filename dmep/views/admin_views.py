@@ -319,8 +319,10 @@ def product_upsert(request):
         # -----------------------------
         # IMAGE (ONLY IF NEW FILE UPLOADED)
         # -----------------------------
-        if "img" in request.FILES:
-            product.img = request.FILES["img"]
+        if "image" in request.FILES:
+            file = request.FILES["image"]
+            image_url = upload_to_supabase(file)
+            product.image_url = image_url
 
         # -----------------------------
         # SAVE (CREATE OR UPDATE)
