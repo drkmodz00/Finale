@@ -6,6 +6,7 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 import dj_database_url
+import cloudinary
 
 # ──────────────────────────────────────────────
 # BASE DIRECTORY
@@ -20,12 +21,9 @@ load_dotenv(BASE_DIR / ".env")
 # SECURITY
 # ──────────────────────────────────────────────
 
-SECRET_KEY = 'django-insecure-change-this-in-production-use-env-variable'
-
-DEBUG = True
-
-ALLOWED_HOSTS = ["*"]
-
+SECRET_KEY = os.getenv("SECRET_KEY", "change-this-in-production-use-env-variable")
+DEBUG = os.getenv("DEBUG", "False") == "True"
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
 # ──────────────────────────────────────────────
 # APPLICATIONS
 # ──────────────────────────────────────────────
@@ -39,6 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'dmep',
+    'cloudinary',
+    'cloudinary_storage',
 ]
 
 # ──────────────────────────────────────────────
@@ -106,6 +106,11 @@ DATABASES = {
     )
 }
 
+cloudinary.config(
+    cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME'),
+    api_key = os.getenv('CLOUDINARY_API_KEY'),
+    api_secret = os.getenv('CLOUDINARY_API_SECRET'),
+)
 # ──────────────────────────────────────────────
 # PASSWORD VALIDATION
 # ──────────────────────────────────────────────
@@ -143,15 +148,12 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # MEDIA FILES
 # ──────────────────────────────────────────────
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
 # ──────────────────────────────────────────────
 # DEFAULT PRIMARY KEY
 # ──────────────────────────────────────────────
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 # ──────────────────────────────────────────────
 # LOGIN SETTINGS
 # ──────────────────────────────────────────────

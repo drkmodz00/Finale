@@ -4,11 +4,11 @@ from datetime import timedelta
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.models import User
+from cloudinary.models import CloudinaryField
 
 class Profile(models.Model):
     ROLE_CHOICES = (
         ('admin', 'Admin'),
-        ('staff', 'Staff'),
         ('customer', 'Customer'),
     )
 
@@ -88,7 +88,8 @@ class Product(models.Model):
     reorder_level = models.IntegerField(blank=True, null=True)
     unit = models.CharField(max_length=50, blank=True, null=True)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, blank=True, null=True)
-    img = models.ImageField(upload_to='products/', blank=True, null=True)    
+    img = CloudinaryField('image', blank=True, null=True)
+    
     def __str__(self):
         return self.name
  

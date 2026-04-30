@@ -97,7 +97,7 @@ class SaleAdmin(admin.ModelAdmin):
         'payment_method', 'status'
     )
     list_filter = ('status', 'payment_method', 'sale_date')
-    search_fields = ('customer__full_name')
+    search_fields = ['customer__full_name']
     ordering = ('-sale_date',)
     readonly_fields = ('sale_date',)
     inlines = (SaleItemInline,)
