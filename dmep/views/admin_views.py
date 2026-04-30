@@ -12,6 +12,7 @@ from django.core.paginator import Paginator
 from ..models import *
 from dmep.utils.discounts import calculate_discounted_price
 from dmep.utils.po import recalc_po_total
+from cloudinary.uploader import upload
 
 
 def is_admin(user):
@@ -412,8 +413,9 @@ def product_upsert(request):
 
         # ✅ IMAGE
         if "img" in request.FILES:
-            product.img = request.FILES["img"]
+            result = upload(request.FILES["img"])
 
+            product.img = result.get("public_id") 
         product.save()
 
         # SUCCESS MESSAGE
