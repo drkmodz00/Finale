@@ -1,0 +1,138 @@
+{% extends 'panel/base.html' %}
+{% block content %}
+
+<!-- HEADER -->
+
+<div class="flex justify-between items-start mb-6">
+
+<div>
+    <h1 class="text-2xl font-bold text-slate-800">
+        PO #{{ po.id }} - {{ po.supplier.name }}
+    </h1>
+    <p class="text-sm text-slate-400">Editable Purchase Items</p>
+</div>
+
+<a href="{% url 'po_list' %}"
+   class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm">
+    ← Back
+</a>
+
+</div>
+
+<!-- TABLE -->
+
+<div class="bg-white border rounded-xl shadow-sm overflow-hidden">
+
+<table class="w-full text-sm">
+
+<thead class="bg-slate-900 text-white text-xs uppercase">
+<tr>
+    <th class="p-3 text-left">Image</th>
+    <th class="p-3 text-left">Product</th>
+    <th class="p-3 text-left">Qty Ordered</th>
+    <th class="p-3 text-left">Qty Received</th>
+    <th class="p-3 text-left">Unit Cost</th>
+    <th class="p-3 text-left">Actions</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for item in po.po_items.all %}
+
+<tr class="border-b hover:bg-slate-50">
+
+<!-- IMAGE -->
+<td class="p-3">
+    {% if item.product.img %}
+        <img src="{{ item.product.img.url }}"
+             class="w-12 h-12 object-cover rounded-lg border">
+    {% else %}
+        <div class="w-12 h-12 bg-slate-200 rounded-lg"></div>
+    {% endif %}
+</td>
+
+<!-- PRODUCT -->
+<td class="p-3 font-medium text-slate-700">
+    {{ item.product.name }}
+</td>
+
+<!-- QTY ORDERED -->
+<td class="p-3">
+    <input type="number"
+           value="{{ item.qty_ordered }}"
+           class="w-20 border rounded px-2 py-1">
+</td>
+
+<!-- QTY RECEIVED -->
+<td class="p-3">
+    <input type="number"
+           value="{{ item.qty_received|default:0 }}"
+           class="w-20 border rounded px-2 py-1">
+</td>
+
+<!-- UNIT COST -->
+<td class="p-3">
+    <input type="number"
+           step="0.01"
+           value="{{ item.unit_cost }}"
+           class="w-24 border rounded px-2 py-1">
+</td>
+
+<!-- ACTIONS -->
+<td class="p-3 flex items-center gap-2">
+
+    <!-- SAVE (keep simple if needed later) -->
+    <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-xs">
+        Save
+    </button>
+
+    <!-- DELETE (window.location style) -->
+    <button type="button"
+        onclick="deletePOItem('{{ item.id }}')"
+        class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-xs">
+        Delete
+    </button>
+
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+    <td colspan="6" class="p-6 text-center text-slate-400">
+        No items found
+    </td>
+</tr>
+{% endfor %}
+
+</tbody>
+</table>
+
+</div>
+
+<!-- SUMMARY -->
+
+<div class="mt-4 bg-white border rounded-xl p-4 flex justify-end items-center">
+
+<span class="text-slate-500 mr-2">Total PO Amount:</span>
+<span class="text-xl font-bold text-green-600">
+    ₱{{ po.total_cost|default:0 }}
+</span>
+
+</div>
+
+<!-- ================= JS ================= -->
+
+<script>
+
+function deletePOItem(id) {
+    if (!confirm("Delete this item?")) return;
+
+    window.location.href = `/po/item/${id}/delete/`;
+}
+
+</script>
+
+{% endblock %}

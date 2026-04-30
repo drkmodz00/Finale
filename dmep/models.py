@@ -21,7 +21,6 @@ class Profile(models.Model):
 class Category(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
-    image_url = models.URLField(blank=True, null=True)
     parent = models.ForeignKey(
         'self',
         on_delete=models.CASCADE,
@@ -42,26 +41,26 @@ class Supplier(models.Model):
     def __str__(self):
         return self.name
     
-class Cashier(models.Model):
-    # ROLE_CHOICES = [('admin', 'Admin'), ('cashier', 'Cashier'), ('manager', 'Manager')]
-    ROLE_CHOICES = [('admin', 'Admin')]
+# class Cashier(models.Model):
+#     # ROLE_CHOICES = [('admin', 'Admin'), ('cashier', 'Cashier'), ('manager', 'Manager')]
+#     ROLE_CHOICES = [('admin', 'Admin')]
 
-    STATUS_CHOICES = [('active', 'Active'), ('inactive', 'Inactive')]
+#     STATUS_CHOICES = [('active', 'Active'), ('inactive', 'Inactive')]
  
-    full_name = models.CharField(max_length=255)
-    username = models.CharField(max_length=150, unique=True)
-    password_hash = models.CharField(max_length=255)
-    role = models.CharField(max_length=50, choices=ROLE_CHOICES, blank=True, null=True)
-    status = models.CharField(max_length=50, choices=STATUS_CHOICES, blank=True, null=True)
+#     full_name = models.CharField(max_length=255)
+#     username = models.CharField(max_length=150, unique=True)
+#     password_hash = models.CharField(max_length=255)
+#     role = models.CharField(max_length=50, choices=ROLE_CHOICES, blank=True, null=True)
+#     status = models.CharField(max_length=50, choices=STATUS_CHOICES, blank=True, null=True)
  
-    def set_password(self, raw_password):
-        self.password_hash = make_password(raw_password)
+#     def set_password(self, raw_password):
+#         self.password_hash = make_password(raw_password)
 
-    def check_password(self, raw_password):
-        return check_password(raw_password, self.password_hash)
+#     def check_password(self, raw_password):
+#         return check_password(raw_password, self.password_hash)
 
-    def __str__(self):
-        return self.full_name
+#     def __str__(self):
+#         return self.full_name
 
 class Customer(models.Model):
     full_name = models.CharField(max_length=255)
@@ -89,7 +88,7 @@ class Product(models.Model):
     reorder_level = models.IntegerField(blank=True, null=True)
     unit = models.CharField(max_length=50, blank=True, null=True)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, blank=True, null=True)
-    image_url = models.URLField(blank=True, null=True)    
+    img = models.ImageField(upload_to='products/', blank=True, null=True)    
     def __str__(self):
         return self.name
  
@@ -125,7 +124,7 @@ class Sale(models.Model):
 
     order_code = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     guest_id = models.CharField(max_length=255, null=True, blank=True)
-    cashier = models.ForeignKey(Cashier, on_delete=models.SET_NULL, null=True, blank=True, related_name='sales')
+    # cashier = models.ForeignKey(Cashier, on_delete=models.SET_NULL, null=True, blank=True, related_name='sales')
     customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True, related_name='sales')
     discount = models.ForeignKey(Discount, on_delete=models.SET_NULL, null=True, blank=True, related_name='sales')
     sale_date = models.DateTimeField(auto_now_add=True)
@@ -166,8 +165,9 @@ class SaleItem(models.Model):
 class StockMovement(models.Model):
     TYPE_CHOICES = [('in', 'Stock In'), ('out', 'Stock Out'), ('adjustment', 'Adjustment'), ('return', 'Return')]
  
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='movements')
-    cashier = models.ForeignKey(Cashier, on_delete=models.SET_NULL, null=True, blank=True, related_name='movements')
+    po_item = models.ForeignKey('POItem', on_delete=models.SET_NULL, null=True, blank=True)
+    sale_item = models.ForeignKey('SaleItem', on_delete=models.SET_NULL, null=True, blank=True)
+    product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='movements')
     type = models.CharField(max_length=50, choices=TYPE_CHOICES)
     quantity = models.IntegerField()
     reason = models.TextField(blank=True, null=True)
@@ -181,7 +181,6 @@ class PurchaseOrder(models.Model):
     STATUS_CHOICES = [('pending', 'Pending'), ('received', 'Received'), ('partial', 'Partial'), ('cancelled', 'Cancelled')]
  
     supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, null=True, related_name='purchase_orders')
-    cashier = models.ForeignKey(Cashier, on_delete=models.SET_NULL, null=True, blank=True, related_name='purchase_orders')
     order_date = models.DateTimeField(auto_now_add=True)
     received_date = models.DateTimeField(blank=True, null=True)
     total_cost = models.FloatField(blank=True, null=True)
@@ -195,7 +194,11 @@ class POItem(models.Model):
     po = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, related_name='po_items')
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, related_name='po_items')
     qty_ordered = models.IntegerField()
+
+    # this should be in purchase order?
     qty_received = models.IntegerField(default=0)
+
+
     unit_cost = models.FloatField()
  
     def __str__(self):
@@ -247,3 +250,8 @@ class OrderTracking(models.Model):
 
     def __str__(self):
         return f"{self.sale.order_code} - {self.status}"
+
+class OrderStatusHistory(models.Model):
+    sale = models.ForeignKey(Sale, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20)
+    changed_at = models.DateTimeField(auto_now_add=True)

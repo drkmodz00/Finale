@@ -54,7 +54,7 @@ class SaleForm(forms.ModelForm):
     class Meta:
         model = Sale
         fields = [
-            'cashier', 'customer', 'discount',
+             'customer', 'discount',
             'payment_method', 'amount_tendered',
             'discount_amount', 'tax_amount', 'status'
         ]
@@ -77,7 +77,7 @@ SaleItemFormSet = inlineformset_factory(
 class StockMovementForm(forms.ModelForm):
     class Meta:
         model = StockMovement
-        fields = ['product', 'cashier', 'type', 'quantity', 'reason']
+        fields = ['product', 'type', 'quantity', 'reason']
         widgets = {
             'reason': forms.Textarea(attrs={'rows': 3}),
         }
@@ -86,18 +86,18 @@ class StockMovementForm(forms.ModelForm):
 class PurchaseOrderForm(forms.ModelForm):
     class Meta:
         model = PurchaseOrder
-        fields = ['supplier', 'cashier', 'status']
+        fields = ['supplier']
 
 
 class POItemForm(forms.ModelForm):
     class Meta:
         model = POItem
-        fields = ['product', 'qty_ordered', 'qty_received', 'unit_cost']
+        fields = ['product', 'qty_ordered', 'unit_cost']
 
 
-POItemFormSet = inlineformset_factory(
-    PurchaseOrder, POItem,
-    form=POItemForm,
-    extra=3,
-    can_delete=True
-)
+# POItemFormSet = inlineformset_factory(
+#     PurchaseOrder, POItem,
+#     form=POItemForm,
+#     extra=3,
+#     can_delete=True
+# )

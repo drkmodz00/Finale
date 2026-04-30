@@ -1,0 +1,200 @@
+{% extends 'panel/base.html' %}
+{% block content %}
+
+<!-- HEADER -->
+<div class="flex justify-between items-center mb-6">
+
+    <div>
+        <h1 class="text-2xl font-semibold text-slate-800">Stock Movement Log</h1>
+        <p class="text-sm text-slate-400">
+            Auto-generated from Purchase Orders, Sales, and Returns
+        </p>
+    </div>
+
+    <!-- ONLY ADMIN ADJUSTMENT -->
+    <button onclick="openModal()"
+        class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm">
+        + Adjustment
+    </button>
+
+</div>
+
+<!-- TABLE -->
+<div class="bg-white border rounded-xl shadow-sm overflow-hidden">
+
+<table class="w-full text-sm">
+
+<thead class="bg-slate-900 text-white text-xs uppercase">
+<tr>
+    <th class="p-3 text-left">Product</th>
+    <th class="p-3 text-center">Type</th>
+    <th class="p-3 text-center">Qty</th>
+    <th class="p-3 text-left">Source</th>
+    <th class="p-3 text-left">Reason</th>
+    <th class="p-3 text-right">Date</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for m in movements %}
+<tr class="border-b hover:bg-slate-50">
+
+    <!-- PRODUCT -->
+    <td class="p-3 font-medium text-slate-800">
+        {{ m.product.name }}
+    </td>
+
+    <!-- TYPE -->
+    <td class="text-center">
+        <span class="px-2 py-1 text-xs rounded-full font-medium
+            {% if m.type == 'in' %}bg-green-100 text-green-700
+            {% elif m.type == 'out' %}bg-red-100 text-red-700
+            {% elif m.type == 'return' %}bg-blue-100 text-blue-700
+            {% else %}bg-slate-100 text-slate-600{% endif %}">
+            {{ m.get_type_display }}
+        </span>
+    </td>
+
+    <!-- QTY -->
+    <td class="text-center font-semibold text-slate-800">
+        {{ m.quantity }}
+    </td>
+
+    <!-- SOURCE -->
+    <td class="text-sm text-slate-500">
+
+        {% if m.po_item %}
+            <span class="px-2 py-1 bg-indigo-50 text-indigo-600 rounded text-xs">
+                PO #{{ m.po_item.po.id }}
+            </span>
+
+        {% elif m.sale_item %}
+            <span class="px-2 py-1 bg-blue-50 text-blue-600 rounded text-xs">
+                Sale #{{ m.sale_item.sale.id }}
+            </span>
+
+        {% else %}
+            <span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs">
+                Manual Adjustment
+            </span>
+        {% endif %}
+
+    </td>
+
+    <!-- REASON -->
+    <td class="text-slate-600">
+        {{ m.reason|default:"—" }}
+    </td>
+
+    <!-- DATE -->
+    <td class="text-right pr-4 text-xs text-slate-400">
+        {{ m.moved_at|date:"M d, Y H:i" }}
+    </td>
+
+</tr>
+
+{% empty %}
+<tr>
+    <td colspan="6" class="text-center py-10 text-slate-400">
+        No stock movements found
+    </td>
+</tr>
+{% endfor %}
+
+</tbody>
+</table>
+
+</div>
+
+<!-- ================= ADJUSTMENT MODAL (ONLY MANUAL CASE) ================= -->
+<div id="modal" class="fixed inset-0 hidden items-center justify-center z-50">
+
+    <div class="absolute inset-0 bg-black/50" onclick="closeModal()"></div>
+
+    <div class="bg-white w-full max-w-md rounded-xl p-6 shadow-xl relative">
+
+        <div class="flex justify-between items-center mb-5">
+            <h2 class="text-lg font-semibold text-slate-800">
+                Manual Stock Adjustment
+            </h2>
+
+            <button onclick="closeModal()"
+                class="text-slate-500 hover:text-red-500 text-xl">
+                ✕
+            </button>
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <!-- PRODUCT -->
+            <div class="mb-3">
+                <label class="text-sm text-slate-600">Product</label>
+                <select name="product"
+                    class="w-full border rounded-lg p-2 mt-1">
+                    {% for p in products %}
+                        <option value="{{ p.id }}">{{ p.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- TYPE -->
+            <div class="mb-3">
+                <label class="text-sm text-slate-600">Type</label>
+                <select name="type"
+                    class="w-full border rounded-lg p-2 mt-1">
+
+                    <option value="adjustment">Adjustment</option>
+                    <option value="return">Return</option>
+
+                </select>
+            </div>
+
+            <!-- QTY -->
+            <div class="mb-3">
+                <label class="text-sm text-slate-600">Quantity</label>
+                <input type="number" name="quantity"
+                    class="w-full border rounded-lg p-2 mt-1"
+                    required>
+            </div>
+
+            <!-- REASON -->
+            <div class="mb-4">
+                <label class="text-sm text-slate-600">Reason</label>
+                <textarea name="reason"
+                    class="w-full border rounded-lg p-2 mt-1"></textarea>
+            </div>
+
+            <button class="w-full bg-slate-900 hover:bg-slate-800 text-white py-2 rounded-lg">
+                Save Adjustment
+            </button>
+
+        </form>
+
+    </div>
+</div>
+
+<!-- JS -->
+<script>
+
+function openModal() {
+    document.getElementById("modal").classList.remove("hidden");
+    document.getElementById("modal").classList.add("flex");
+}
+
+function closeModal() {
+    document.getElementById("modal").classList.add("hidden");
+    document.getElementById("modal").classList.remove("flex");
+}
+
+/* close on outside click */
+document.addEventListener("click", function(e){
+    if(e.target.id === "modal"){
+        closeModal();
+    }
+});
+
+</script>
+
+{% endblock %}

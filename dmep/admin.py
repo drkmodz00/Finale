@@ -26,24 +26,24 @@ class SupplierAdmin(admin.ModelAdmin):
     ordering = ('name',)
 
 
-@admin.register(Cashier)
-class CashierAdmin(admin.ModelAdmin):
-    list_display = ('id', 'full_name', 'username', 'role', 'status')
-    list_filter = ('role', 'status')
-    search_fields = ('full_name', 'username')
-    ordering = ('full_name',)
+# @admin.register(Cashier)
+# class CashierAdmin(admin.ModelAdmin):
+#     list_display = ('id', 'full_name', 'username', 'role', 'status')
+#     list_filter = ('role', 'status')
+#     search_fields = ('full_name', 'username')
+#     ordering = ('full_name',)
 
-    # show password field in admin form
-    fields = ('full_name', 'username', 'role', 'status', 'password_hash')
+#     # show password field in admin form
+#     fields = ('full_name', 'username', 'role', 'status', 'password_hash')
 
-    def save_model(self, request, obj, form, change):
-        raw_password = form.cleaned_data.get('password_hash')
+#     def save_model(self, request, obj, form, change):
+#         raw_password = form.cleaned_data.get('password_hash')
 
-        # only hash if user typed something
-        if raw_password and not raw_password.startswith('pbkdf2_'):
-            obj.set_password(raw_password)
+#         # only hash if user typed something
+#         if raw_password and not raw_password.startswith('pbkdf2_'):
+#             obj.set_password(raw_password)
 
-        super().save_model(request, obj, form, change)
+#         super().save_model(request, obj, form, change)
 
 @admin.register(Customer)
 class CustomerAdmin(admin.ModelAdmin):
@@ -92,12 +92,12 @@ class DiscountAdmin(admin.ModelAdmin):
 @admin.register(Sale)
 class SaleAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'sale_date', 'cashier', 'customer',
+        'id', 'sale_date', 'customer',
         'subtotal', 'discount_amount', 'tax_amount', 'total_amount',
         'payment_method', 'status'
     )
     list_filter = ('status', 'payment_method', 'sale_date')
-    search_fields = ('customer__full_name', 'cashier__full_name')
+    search_fields = ('customer__full_name')
     ordering = ('-sale_date',)
     readonly_fields = ('sale_date',)
     inlines = (SaleItemInline,)
@@ -112,7 +112,7 @@ class SaleItemAdmin(admin.ModelAdmin):
 
 @admin.register(StockMovement)
 class StockMovementAdmin(admin.ModelAdmin):
-    list_display = ('id', 'product', 'type', 'quantity', 'cashier', 'moved_at', 'reason')
+    list_display = ('id', 'product', 'type', 'quantity', 'moved_at', 'reason')
     list_filter = ('type', 'moved_at')
     search_fields = ('product__name', 'reason')
     ordering = ('-moved_at',)
@@ -122,7 +122,7 @@ class StockMovementAdmin(admin.ModelAdmin):
 
 @admin.register(PurchaseOrder)
 class PurchaseOrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'supplier', 'cashier', 'order_date', 'received_date', 'total_cost', 'status')
+    list_display = ('id', 'supplier', 'order_date', 'received_date', 'total_cost', 'status')
     list_filter = ('status', 'order_date')
     search_fields = ('supplier__name',)
     ordering = ('-order_date',)

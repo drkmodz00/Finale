@@ -12,96 +12,106 @@
 </div>
 
 <!-- TABLE -->
-<div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+<div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-visible">
 
 <table class="w-full text-sm">
 
-<!-- HEADER -->
-<thead class="bg-slate-900 text-white text-xs uppercase tracking-wider">
+<thead class="bg-slate-900 text-white text-xs uppercase">
 <tr>
     <th class="px-4 py-3 text-left">Customer</th>
     <th class="px-4 py-3 text-left">Phone</th>
     <th class="px-4 py-3 text-left">Email</th>
-    <th class="px-4 py-3 text-left">Sales</th>
-    <th class="px-4 py-3 text-left">Loyalty</th>
+    <th class="px-4 py-3 text-left">Address</th>
+    <th class="px-4 py-3 text-left">Loyalty Points</th>
+    <th class="px-4 py-3 text-left">Joined</th>
     <th class="px-4 py-3 text-center w-20">Action</th>
 </tr>
 </thead>
 
-<!-- BODY -->
 <tbody>
 
 {% for c in customers %}
-<tr class="border-b hover:bg-slate-50 transition">
+<tr class="border-b hover:bg-slate-50">
 
-    <!-- NAME -->
-    <td class="px-4 py-3 font-medium text-slate-800">
-        {{ c.full_name }}
-    </td>
+    <td class="px-4 py-3 font-medium">{{ c.full_name }}</td>
+    <td class="px-4 py-3">{{ c.phone|default:"—" }}</td>
+    <td class="px-4 py-3">{{ c.email|default:"—" }}</td>
+    <td class="px-4 py-3">{{ c.address|default:"—" }}</td>
 
-    <!-- PHONE -->
-    <td class="px-4 py-3 text-slate-600">
-        {{ c.phone|default:"—" }}
-    </td>
-
-    <!-- EMAIL -->
-    <td class="px-4 py-3 text-slate-600">
-        {{ c.email|default:"—" }}
-    </td>
-
-    <!-- SALES -->
     <td class="px-4 py-3">
-        <span class="px-2 py-1 text-xs bg-slate-100 rounded-full">
-            {{ c.sale_count }}
+        <span class="px-2 py-1 text-xs bg-indigo-100 text-indigo-700 rounded-full">
+            {{ c.loyalty_points }} pts
         </span>
     </td>
 
-    <!-- LOYALTY -->
-    <td class="px-4 py-3">
-
-        <div class="flex items-center justify-between mb-1">
-            <span class="text-xs text-indigo-600 font-medium">
-                {{ c.loyalty_points }} pts
-            </span>
-            <span class="text-xs text-slate-400">
-                {{ c.pts_percent }}%
-            </span>
-        </div>
-
-        <div class="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-            <div class="h-full bg-indigo-600 rounded-full"
-                 style="width: {{ c.pts_percent }}%">
-            </div>
-        </div>
-
+    <td class="px-4 py-3 text-xs text-slate-500">
+        {{ c.created_at|date:"M d, Y" }}
     </td>
 
     <!-- ACTION -->
-    <td class="px-4 py-3 text-center">
+    <td class="px-4 py-3 relative text-center">
 
-        <a href="{% url 'customer_details' c.id %}"
-           class="inline-flex items-center justify-center w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-blue-600 transition">
+        <button onclick="toggleMenu('{{ c.id }}')"
+            class="p-2 rounded hover:bg-slate-100">
+            ⋮
+        </button>
 
-            <i class="fa-regular fa-eye"></i>
+        <div id="menu-{{ c.id }}"
+            class="hidden absolute right-4 top-10 w-40 bg-white border rounded-lg shadow z-20">
 
-        </a>
+            <a href="{% url 'customer_details' c.id %}"
+               class="block w-full text-left px-4 py-2 text-sm hover:bg-slate-50">
+                View
+            </a>
+
+            <button
+                onclick="deleteCustomer('{{ c.id }}')"
+                class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50">
+                Delete
+            </button>
+
+        </div>
 
     </td>
 
-</tr>
-
-{% empty %}
-<tr>
-    <td colspan="6" class="text-center py-10 text-slate-400">
-        No customers found
-    </td>
 </tr>
 {% endfor %}
 
 </tbody>
-
 </table>
-
 </div>
+
+<!-- ================= JS ================= -->
+<script>
+
+let openMenuId = null;
+
+/* TOGGLE MENU */
+function toggleMenu(id) {
+
+    document.querySelectorAll('[id^="menu-"]').forEach(m => {
+        if (m.id !== "menu-" + id) m.classList.add("hidden");
+    });
+
+    const menu = document.getElementById("menu-" + id);
+    menu.classList.toggle("hidden");
+
+    openMenuId = id;
+}
+
+/* CLOSE ON OUTSIDE CLICK */
+document.addEventListener("click", function(e){
+    if(!e.target.closest("button")){
+        document.querySelectorAll('[id^="menu-"]').forEach(m => m.classList.add("hidden"));
+    }
+});
+
+/* DELETE (LIKE YOUR OTHER PAGES USING window.location) */
+function deleteCustomer(id){
+    if (!confirm("Delete this customer?")) return;
+    window.location.href = `/admin-panel/customers/${id}/delete/`;
+}
+
+</script>
 
 {% endblock %}

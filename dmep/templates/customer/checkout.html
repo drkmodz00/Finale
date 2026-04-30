@@ -3,7 +3,6 @@
 
 {% block content %}
 
-<!-- ICONIFY -->
 <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
 
 <div class="max-w-6xl mx-auto px-4 py-10">
@@ -32,29 +31,35 @@
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-            <input type="text" name="full_name"
+            <!-- FULL NAME -->
+            <input type="text" name="full_name" id="full_name"
               value="{{ customer.full_name|default:'' }}"
               placeholder="Full Name"
-              class="w-full px-4 py-3 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+              class="w-full px-4 py-3 border rounded-lg text-sm">
 
-            <input type="text" name="phone"
+            <!-- PHONE (KEY FIELD FOR GUEST RECOGNITION) -->
+            <input type="text" name="phone" id="phone"
               value="{{ customer.phone|default:'' }}"
               placeholder="Phone Number"
-              class="w-full px-4 py-3 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+              class="w-full px-4 py-3 border rounded-lg text-sm">
 
-            <input type="email" name="email"
+            <!-- EMAIL -->
+            <input type="email" name="email" id="email"
               value="{{ customer.email|default:'' }}"
               placeholder="Email Address"
-              class="w-full px-4 py-3 border rounded-lg text-sm md:col-span-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+              class="w-full px-4 py-3 border rounded-lg text-sm md:col-span-2">
 
-            <input type="text" name="address"
+            <!-- ADDRESS -->
+            <input type="text" name="address" id="address"
               value="{{ customer.address|default:'' }}"
               placeholder="Delivery Address"
-              class="w-full px-4 py-3 border rounded-lg text-sm md:col-span-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+              class="w-full px-4 py-3 border rounded-lg text-sm md:col-span-2">
 
           </div>
-        </div>
 
+          <!-- HIDDEN CUSTOMER ID (auto-filled if found) -->
+          <input type="hidden" name="customer_id" id="customer_id">
+        </div>
 
         <!-- PAYMENT -->
         <div class="bg-white border rounded-xl p-6 shadow-sm">
@@ -65,41 +70,36 @@
 
           <div class="space-y-3">
 
-            {% if payment_choices %}
-              {% for value, name in payment_choices %}
+            {% for value, name in payment_choices %}
 
-              <label class="flex items-center justify-between p-4 border rounded-xl cursor-pointer hover:border-blue-500 transition">
+            <label class="flex items-center justify-between p-4 border rounded-xl cursor-pointer">
 
-                <input type="radio"
-                  name="payment_method"
-                  value="{{ value }}"
-                  class="w-4 h-4 text-blue-600"
-                  {% if forloop.first %}checked{% endif %}>
+              <input type="radio"
+                name="payment_method"
+                value="{{ value }}"
+                {% if forloop.first %}checked{% endif %}>
 
-                <div class="flex items-center gap-3 flex-1 ml-3">
+              <div class="flex items-center gap-3 flex-1 ml-3">
 
-                  <span class="iconify text-2xl text-blue-600"
-                        data-icon="
-                          {% if value == 'cash' %}mdi:cash
-                          {% elif value == 'gcash' %}simple-icons:gcash
-                          {% elif value == 'card' %}mdi:credit-card
-                          {% else %}mdi:wallet{% endif %}
-                        ">
-                  </span>
+                <span class="iconify text-2xl text-blue-600"
+                      data-icon="
+                        {% if value == 'cash' %}mdi:cash
+                        {% elif value == 'gcash' %}simple-icons:gcash
+                        {% elif value == 'card' %}mdi:credit-card
+                        {% else %}mdi:wallet{% endif %}
+                      ">
+                </span>
 
-                  <div>
-                    <p class="text-sm font-semibold text-gray-900">{{ name }}</p>
-                    <p class="text-xs text-gray-400">Secure payment</p>
-                  </div>
-
+                <div>
+                  <p class="text-sm font-semibold">{{ name }}</p>
+                  <p class="text-xs text-gray-400">Secure payment</p>
                 </div>
 
-              </label>
+              </div>
 
-              {% endfor %}
-            {% else %}
-              <p class="text-sm text-gray-500">No payment methods available</p>
-            {% endif %}
+            </label>
+
+            {% endfor %}
 
           </div>
 
@@ -107,41 +107,26 @@
 
       </div>
 
-
       <!-- RIGHT SIDE -->
       <aside class="lg:col-span-1">
 
         <div class="bg-white border rounded-xl p-6 shadow-sm sticky top-6">
 
-          <h2 class="text-sm font-semibold text-gray-700 mb-4">
-            Order Summary
-          </h2>
+          <h2 class="text-sm font-semibold mb-4">Order Summary</h2>
 
-          <div class="space-y-4 max-h-[320px] overflow-y-auto pr-1">
+          <div class="space-y-4 max-h-[320px] overflow-y-auto">
 
             {% for item in cart_items %}
             <div class="flex gap-3">
 
-              <img src="{{ item.product.image_url }}"
+              <img src="{{ item.product.img.url }}"
                    class="w-12 h-12 rounded-lg object-cover border">
 
               <div class="flex-1">
-                <p class="text-sm font-semibold text-gray-900">
-                  {{ item.product.name }}
-                </p>
-
-                <p class="text-xs text-gray-500">
-                  Qty: {{ item.qty }}
-                </p>
-
+                <p class="text-sm font-semibold">{{ item.product.name }}</p>
+                <p class="text-xs text-gray-500">Qty: {{ item.qty }}</p>
                 <p class="text-xs text-gray-500">
                   ₱{{ item.original_price|floatformat:2 }}
-
-                  {% if item.discount_amount and item.discount_amount > 0 %}
-                    <span class="text-red-500 ml-1">
-                      -₱{{ item.discount_amount|floatformat:2 }}
-                    </span>
-                  {% endif %}
                 </p>
               </div>
 
@@ -150,21 +135,21 @@
 
           </div>
 
-          <hr class="my-4 border-gray-200">
+          <hr class="my-4">
 
           <div class="space-y-2 text-sm">
 
-            <div class="flex justify-between text-gray-500">
+            <div class="flex justify-between">
               <span>Subtotal</span>
               <span>₱{{ subtotal|default:0|floatformat:2 }}</span>
             </div>
 
-            <div class="flex justify-between text-gray-500">
+            <div class="flex justify-between">
               <span>Discount</span>
               <span>-₱{{ discount_total|default:0|floatformat:2 }}</span>
             </div>
 
-            <div class="flex justify-between text-base font-bold text-gray-900">
+            <div class="flex justify-between font-bold text-lg">
               <span>Total</span>
               <span>₱{{ total_amount|default:0|floatformat:2 }}</span>
             </div>
@@ -172,8 +157,7 @@
           </div>
 
           <button type="submit"
-                  form="checkout-form"
-                  class="w-full mt-5 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition">
+            class="w-full mt-5 bg-blue-600 text-white py-3 rounded-xl font-semibold">
             Place Order
           </button>
 
@@ -185,5 +169,40 @@
   </form>
 
 </div>
+
+<!-- ================================
+     🔥 GUEST AUTO-FILL LOGIC
+================================ -->
+<script>
+
+document.getElementById("phone").addEventListener("blur", function () {
+
+    const phone = this.value;
+
+    if (!phone) return;
+
+    fetch(`/ajax/customer-by-phone/?phone=${phone}`)
+        .then(res => res.json())
+        .then(data => {
+
+            if (data.exists) {
+
+                document.getElementById("customer_id").value = data.id;
+                document.getElementById("full_name").value = data.full_name;
+                document.getElementById("email").value = data.email;
+                document.getElementById("address").value = data.address;
+
+            } else {
+
+                // NEW GUEST
+                document.getElementById("customer_id").value = "";
+
+            }
+
+        });
+
+});
+
+</script>
 
 {% endblock %}

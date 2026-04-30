@@ -44,7 +44,7 @@ def cart_view(request):
         cart_items.append({
             "key": pid,
             "name": product.name,
-            "image": product.image_url if product.img and product.img.name else None,
+            "image": product.img_url if product.img and product.img.name else None,
             "price": final_price,
             "qty": qty,
             "total": line_final,

@@ -17,13 +17,13 @@ from ..utils.discounts import calculate_discounted_price
 
 def dashboard(request):
     products = Product.objects.filter(status="active")
-    last_order_code = request.session.pop('last_order_code', None)
+    last_order_code = request.session.pop("last_order_code", None)
+
     sale_products = []
 
     for product in products:
         final_price, discount_obj, percent = calculate_discounted_price(product)
 
-        # attach values
         product.final_price = final_price
         product.discount_percent = percent or 0
         product.discount_obj = discount_obj
@@ -33,7 +33,6 @@ def dashboard(request):
 
     sale_products = sale_products[:8]
 
-    # categories (unchanged but cleaner fallback)
     women = Category.objects.filter(name__iexact="Women").first()
     men = Category.objects.filter(name__iexact="Men").first()
     kids = Category.objects.filter(name__iexact="Kids").first()
@@ -166,7 +165,7 @@ def cart_view(request):
         cart_items.append({
             "key": pid,
             "name": product.name,
-            "image": product.image_url if product.img and product.img.name else None,
+            "image": product.img.url if product.img and product.img.name else None,
             "price": final_price,
             "qty": qty,
             "total": line_final,
@@ -280,21 +279,16 @@ def update_selected_items(request):
     })
 
 def checkout_view(request):
-    import uuid
-
-    # ✅ GET OR CREATE GUEST ID (PERSISTENT)
-    guest_id = request.COOKIES.get('guest_id')
-    if not guest_id:
-        guest_id = str(uuid.uuid4())
+    guest_id = request.COOKIES.get("guest_id") or str(uuid.uuid4())
 
     cart = request.session.get("cart", {})
-    selected_keys = request.session.get("selected_items", list(cart.keys()))
-    selected_keys = [str(x) for x in selected_keys]
+    selected = request.session.get("selected_items", list(cart.keys()))
+    selected = [str(x) for x in selected]
 
     cart_items = []
     subtotal = Decimal("0.00")
     discount_total = Decimal("0.00")
-    final_total = Decimal("0.00")   
+    total = Decimal("0.00")
 
     customer = None
     customer_id = request.session.get("customer_id")
@@ -303,9 +297,7 @@ def checkout_view(request):
         customer = Customer.objects.filter(id=customer_id).first()
 
     for pid, qty in cart.items():
-        pid = str(pid)
-
-        if pid not in selected_keys:
+        if str(pid) not in selected:
             continue
 
         product = get_object_or_404(Product, id=pid)
@@ -313,91 +305,76 @@ def checkout_view(request):
 
         final_price, _, _ = calculate_discounted_price(product)
         final_price = Decimal(str(final_price or 0))
+        price = Decimal(str(product.selling_price or 0))
 
-        selling_price = Decimal(str(product.selling_price or 0))
-
-        line_original = selling_price * qty
+        line_original = price * qty
         line_final = final_price * qty
         line_discount = line_original - line_final
 
         subtotal += line_original
         discount_total += line_discount
-        final_total += line_final
+        total += line_final
 
         cart_items.append({
             "product": product,
             "qty": qty,
-            "original_price": selling_price,
+            "original_price": price,
             "price": final_price,
-            "line_original": line_original,
-            "line_final": line_final,
             "discount_amount": line_discount,
         })
-
-    payment_choices = [
-        ("COD", "Cash on Delivery"),
-        ("GCASH", "GCash"),
-    ]
 
     response = render(request, "customer/checkout.html", {
         "cart_items": cart_items,
         "subtotal": subtotal,
         "discount_total": discount_total,
-        "total_amount": final_total,
-        "payment_choices": payment_choices,
+        "total_amount": total,
         "customer": customer,
+        "payment_choices": [
+            ("COD", "Cash on Delivery"),
+            ("GCASH", "GCash"),
+        ],
     })
 
-    # ✅ SAVE COOKIE (VERY IMPORTANT)
-    response.set_cookie('guest_id', guest_id, max_age=60*60*24*30)
-
+    response.set_cookie("guest_id", guest_id, max_age=60*60*24*30)
     return response
+
 
 @transaction.atomic
 def process_sale(request):
-    import uuid
-
     if request.method != "POST":
         return redirect("checkout")
 
-    # ✅ GET OR CREATE GUEST ID
-    guest_id = request.COOKIES.get("guest_id")
-    if not guest_id:
-        guest_id = str(uuid.uuid4())
+    guest_id = request.COOKIES.get("guest_id") or str(uuid.uuid4())
 
     cart = request.session.get("cart", {})
-    selected_keys = request.session.get("selected_items", list(cart.keys()))
+    selected = request.session.get("selected_items", list(cart.keys()))
 
     full_name = request.POST.get("full_name") or "Walk-in Customer"
     phone = request.POST.get("phone")
     email = request.POST.get("email")
+    address = request.POST.get("address")
     payment_method = request.POST.get("payment_method")
 
     customer = None
 
-    # ===== EXISTING CUSTOMER LOGIC (UNCHANGED) =====
+    # =========================
+    # CUSTOMER HANDLING
+    # =========================
     if phone:
         customer, created = Customer.objects.get_or_create(
             phone=phone,
             defaults={
                 "full_name": full_name,
-                "email": email
+                "email": email,
+                "address": address,
             }
         )
 
         if not created:
-            updated = False
-
-            if full_name and customer.full_name != full_name:
-                customer.full_name = full_name
-                updated = True
-
-            if email and customer.email != email:
-                customer.email = email
-                updated = True
-
-            if updated:
-                customer.save()
+            customer.full_name = full_name or customer.full_name
+            customer.email = email or customer.email
+            customer.address = address or customer.address
+            customer.save()
 
     else:
         customer_id = request.session.get("customer_id")
@@ -408,96 +385,104 @@ def process_sale(request):
         if not customer:
             customer = Customer.objects.create(
                 full_name=full_name,
-                email=email
+                email=email,
+                address=address,
             )
 
     request.session["customer_id"] = customer.id
 
-    # ✅ SAVE SALE WITH guest_id
+    # =========================
+    # CREATE SALE
+    # =========================
     sale = Sale.objects.create(
         customer=customer,
-        guest_id=guest_id,   # 🔥 THIS IS THE FIX
+        guest_id=guest_id,
         payment_method=payment_method,
         status="pending"
     )
 
-    subtotal = 0
-    discount_total = 0
+    subtotal = Decimal("0.00")
+    discount_total = Decimal("0.00")
 
+    # =========================
+    # CART PROCESS
+    # =========================
     for pid, qty in cart.items():
 
-        if pid not in selected_keys:
+        if str(pid) not in selected:
             continue
 
         product = get_object_or_404(Product, id=pid)
         qty = int(qty)
 
-        final_price, _, _ = calculate_discounted_price(product)
+        final_price, discount_obj, discount_pct = calculate_discounted_price(product)
 
-        price = float(product.selling_price or 0)
-        discounted_price = float(final_price)
+        original_price = Decimal(str(product.selling_price or 0))
+        final_price = Decimal(str(final_price or 0))
 
-        line_original = price * qty
-        line_final = discounted_price * qty
+        line_original = original_price * qty
+        line_final = final_price * qty
         line_discount = line_original - line_final
 
         subtotal += line_original
         discount_total += line_discount
 
+        # =========================
+        # SAVE ITEM (FIXED)
+        # =========================
         SaleItem.objects.create(
             sale=sale,
             product=product,
             quantity=qty,
-            unit_price=discounted_price,
-            line_total=line_final
+            unit_price=original_price,
+            line_total=line_final,
+
+            discount_name=getattr(discount_obj, "name", None),
+            discount_type=getattr(discount_obj, "type", None),
+            discount_pct=float(discount_pct or 0),
+            discount_amount=float(line_discount or 0),
         )
 
         product.stock_qty = max((product.stock_qty or 0) - qty, 0)
         product.save()
 
+    # =========================
+    # TOTALS
+    # =========================
     sale.subtotal = subtotal
-    sale.total_amount = subtotal - discount_total
+    sale.discount_amount = float(discount_total)
+    sale.total_amount = float(subtotal - discount_total)
     sale.save()
 
+    # =========================
+    # LOYALTY POINTS
+    # =========================
+    customer.loyalty_points = (customer.loyalty_points or 0) + int(sale.total_amount // 100)
+    customer.save()
+
+    # =========================
+    # CLEAR SESSION
+    # =========================
     request.session["cart"] = {}
     request.session["selected_items"] = []
     request.session["last_order_code"] = str(sale.order_code)
 
-    messages.success(request, "Order placed successfully!")
-
     response = redirect("dashboard")
+    response.set_cookie("guest_id", guest_id, max_age=60 * 60 * 24 * 30)
 
-    # ✅ SAVE COOKIE (PERSISTENT 30 DAYS)
-    response.set_cookie("guest_id", guest_id, max_age=60*60*24*30)
-
+    messages.success(request, "Order placed successfully!")
     return response
 
 def orders_view(request):
     customer = None
     orders = []
 
-    # ✅ PRIORITY 1: session customer (if still exists)
+    guest_id = request.COOKIES.get("guest_id")
+
     customer_id = request.session.get("customer_id")
     if customer_id:
         customer = Customer.objects.filter(id=customer_id).first()
 
-    # ✅ PRIORITY 2: cookie-based guest tracking
-    guest_id = request.COOKIES.get("guest_id")
-
-    # ✅ PRIORITY 3: manual lookup (phone/email)
-    if not customer:
-        phone = request.GET.get("phone")
-        email = request.GET.get("email")
-
-        if phone:
-            customer = Customer.objects.filter(phone=phone).first()
-        elif email:
-            customer = Customer.objects.filter(email=email).first()
-
-        if customer:
-            request.session["customer_id"] = customer.id
-
-    # ===== FETCH ORDERS =====
     if customer:
         orders = Sale.objects.filter(customer=customer).order_by("-sale_date")
 
@@ -508,6 +493,7 @@ def orders_view(request):
         "orders": orders,
         "customer": customer,
     })
+
 
 def order_detail(request, order_code):
     phone = request.GET.get("phone")

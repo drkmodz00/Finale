@@ -1,0 +1,278 @@
+{% extends 'panel/base.html' %}
+{% block content %}
+
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">Purchase Orders</h1>
+        <p class="text-sm text-slate-400">Supplier PO Management</p>
+    </div>
+
+    <button onclick="openModal()"
+        class="bg-slate-800 text-white px-4 py-2 rounded">
+        + Add PO Item
+    </button>
+
+</div>
+
+<!-- FILTER -->
+
+<form method="GET" class="mb-4">
+    <select name="supplier"
+        onchange="this.form.submit()"
+        class="border p-2 rounded w-64">
+
+    <option value="">All Suppliers</option>
+
+    {% for s in suppliers %}
+    <option value="{{ s.id }}"
+        {% if selected_supplier and selected_supplier|stringformat:"s" == s.id|stringformat:"s" %}
+            selected
+        {% endif %}>
+        {{ s.name }}
+    </option>
+    {% endfor %}
+
+</select>
+
+</form>
+
+<!-- TABLE -->
+
+<div class="bg-white shadow rounded-lg overflow-visible">
+
+<table class="w-full text-sm">
+
+<thead class="bg-slate-900 text-white">
+<tr>
+    <th class="p-3 text-left">Supplier</th>
+    <th class="p-3 text-left">Order Date</th>
+    <th class="p-3 text-left">Received Date</th>
+    <th class="p-3 text-left">Total Cost</th>
+    <th class="p-3 text-left">Status</th>
+    <th class="p-3 text-left">Action</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for po in pos %}
+
+<tr class="border-b hover:bg-gray-50">
+
+<td class="p-3 font-medium">
+    {{ po.supplier.name|default:"No Supplier" }}
+</td>
+
+<td class="p-3">    
+    {{ po.order_date|date:"Y-m-d H:i" }}
+</td>
+
+<td class="p-3">
+    {% if po.received_date %}
+        {{ po.received_date|date:"Y-m-d H:i" }}
+    {% else %}
+        <span class="text-gray-400">Pending</span>
+    {% endif %}
+</td>
+
+<td class="p-3">
+    ₱{{ po.total_cost|default:0 }}
+</td>
+
+<td class="p-3">
+    {% if po.status == "pending" %}
+        <span class="text-yellow-600 font-medium">Pending</span>
+    {% elif po.status == "received" %}
+        <span class="text-green-600 font-medium">Received</span>
+    {% else %}
+        <span class="text-gray-500">{{ po.status }}</span>
+    {% endif %}
+</td>
+
+<td class="p-3 relative">
+
+    <button onclick="toggleMenu(event, 'menu-{{ po.id }}')"
+        class="text-xl font-bold px-2">
+        ⋮
+    </button>
+
+    <div id="menu-{{ po.id }}"
+        class="hidden absolute right-0 mt-2 w-44 bg-white border rounded shadow-lg z-50">
+
+        <a href="{% url 'po_items' po.id %}"
+            class="block px-4 py-2 hover:bg-gray-100">
+            View Items
+        </a>
+
+        {% if po.status != "received" %}
+        <form method="POST" action="{% url 'po_receive' po.id %}">
+            {% csrf_token %}
+            <button class="w-full text-left px-4 py-2 hover:bg-gray-100 text-green-600">
+                Receive Stock
+            </button>
+        </form>
+        {% endif %}
+
+        <!-- DELETE (NOW WINDOW.LOCATION STYLE) -->
+        <button type="button"
+            onclick="deletePO('{{ po.id }}')"
+            class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">
+            Delete
+        </button>
+
+    </div>
+
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+    <td colspan="6" class="p-6 text-center text-gray-400">
+        No Purchase Orders Found
+    </td>
+</tr>
+{% endfor %}
+
+</tbody>
+</table>
+
+</div>
+
+<!-- MODAL -->
+
+<div id="modal"
+     class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+
+<div class="bg-white w-[420px] p-6 rounded shadow">
+
+    <h2 class="text-lg font-bold mb-4">Add PO Item</h2>
+
+    <form method="POST" action="{% url 'po_create' %}">
+        {% csrf_token %}
+
+        <select name="supplier" id="supplierSelect"
+            class="border w-full p-2 mb-3">
+            <option value="">Select Supplier</option>
+            {% for s in suppliers %}
+            <option value="{{ s.id }}">{{ s.name }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="product" id="productSelect"
+            class="border w-full p-2 mb-3">
+            <option value="">Select Product</option>
+            {% for p in products %}
+            <option value="{{ p.id }}">{{ p.name }}</option>
+            {% endfor %}
+        </select>
+
+        <input name="qty_ordered"
+            placeholder="Quantity"
+            class="border w-full p-2 mb-3">
+
+        <input name="unit_cost"
+            placeholder="Unit Cost"
+            class="border w-full p-2 mb-3">
+
+        <div class="flex justify-end gap-2">
+
+            <button type="button"
+                onclick="closeModal()"
+                class="px-3 py-1 border">
+                Cancel
+            </button>
+
+            <button type="submit"
+                class="bg-blue-600 text-white px-4 py-1 rounded">
+                Save
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+</div>
+
+<!-- JS -->
+
+<script>
+
+function openModal() {
+    document.getElementById("modal").classList.remove("hidden");
+}
+
+function closeModal() {
+    document.getElementById("modal").classList.add("hidden");
+}
+
+/* MENU */
+function toggleMenu(event, id) {
+    event.stopPropagation();
+
+    document.querySelectorAll('[id^="menu-"]').forEach(el => {
+        if (el.id !== id) el.classList.add("hidden");
+    });
+
+    document.getElementById(id).classList.toggle("hidden");
+}
+
+/* CLOSE OUTSIDE */
+document.addEventListener("click", function () {
+    document.querySelectorAll('[id^="menu-"]').forEach(el => {
+        el.classList.add("hidden");
+    });
+});
+
+/* MODAL CLOSE */
+document.addEventListener("click", function (e) {
+    if (e.target.id === "modal") closeModal();
+});
+
+/* DELETE PO (WINDOW.LOCATION STYLE) */
+function deletePO(id) {
+    if (!confirm("Delete this Purchase Order?")) return;
+
+    window.location.href = `/admin-panel/purchase-orders/${id}/delete/`;
+}
+
+/* AJAX PRODUCT LOAD (UNCHANGED) */
+document.addEventListener("change", function (e) {
+
+    if (e.target && e.target.id === "supplierSelect") {
+
+        const supplierId = e.target.value;
+        const productSelect = document.getElementById("productSelect");
+
+        productSelect.innerHTML = "";
+
+        if (!supplierId) {
+            productSelect.innerHTML = "<option>Select supplier first</option>";
+            return;
+        }
+
+        fetch(`/ajax/supplier-products/?supplier_id=${supplierId}`)
+            .then(res => res.json())
+            .then(data => {
+
+                productSelect.innerHTML = "<option>Select Product</option>";
+
+                data.forEach(p => {
+                    const option = document.createElement("option");
+                    option.value = p.id;
+                    option.textContent = p.name;
+                    productSelect.appendChild(option);
+                });
+
+            });
+
+    }
+
+});
+
+</script>
+
+{% endblock %}

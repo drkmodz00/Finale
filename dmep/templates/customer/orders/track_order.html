@@ -122,7 +122,7 @@
         <div class="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition">
 
           <div class="w-14 h-14 rounded-lg overflow-hidden border bg-gray-100">
-            <img src="{{ item.product.image_url }}"
+            <img src="{% if item.product.img %}{{ item.product.img.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}"
                  class="w-full h-full object-cover">
           </div>
 

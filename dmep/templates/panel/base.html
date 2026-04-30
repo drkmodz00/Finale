@@ -72,6 +72,20 @@
             <i class="fa-solid fa-truck"></i> Suppliers
         </a>
 
+        <a href="{% url 'po_list' %}"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg transition
+        {% if url_name == 'po_list' or url_name == 'po_create' or url_name == 'po_detail' %}bg-slate-700{% else %}hover:bg-slate-800{% endif %}">
+            <i class="fa-solid fa-file-invoice"></i> Purchase Orders
+        </a>
+        
+        <a href="{% url 'stock_movement_list' %}"
+           class="flex items-center gap-3 px-3 py-2 rounded-lg transition
+           {% if url_name == 'stock_movement_list' %}bg-slate-700{% else %}hover:bg-slate-800{% endif %}">
+            <i class="fa-solid fa-box"></i> Stock Movements
+        </a>
+
+        
+
         <a href="{% url 'customer_list' %}"
            class="flex items-center gap-3 px-3 py-2 rounded-lg transition
            {% if url_name == 'customer_list' %}bg-slate-700{% else %}hover:bg-slate-800{% endif %}">

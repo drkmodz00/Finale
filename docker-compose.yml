@@ -1,0 +1,10 @@
+version: "3.9"
+
+services:
+  pos_app:
+    image: pymrdocker/pos_v2:1.3
+    container_name: fsuu_store
+    ports:
+      - "9090:80"   # Web (HTTP)
+      - "2244:22"   # SSH
+    restart: always

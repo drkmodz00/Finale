@@ -3,7 +3,6 @@
 
 <!-- ================= HEADER ================= -->
 <div class="flex items-center justify-between mb-6">
-
     <div>
         <h1 class="text-2xl font-semibold text-slate-800">Products</h1>
         <p class="text-sm text-slate-400">Manage inventory and product catalog</p>
@@ -13,12 +12,10 @@
         class="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm">
         + Add Product
     </button>
-
 </div>
 
 <!-- ================= TABLE ================= -->
 <div class="bg-white border rounded-xl shadow-sm overflow-visible">
-
 <table class="w-full text-sm">
 
 <thead class="bg-slate-900 text-white">
@@ -33,111 +30,125 @@
 </thead>
 
 <tbody>
-
 {% for product in products %}
 <tr class="border-b hover:bg-slate-50">
 
-    <td class="px-4 py-3">
-        <div class="flex items-center gap-3">
+<td class="px-4 py-3">
+    <div class="flex items-center gap-3">
+        {% if product.img %}
+            <img src="{{ product.img.url }}" class="w-10 h-10 rounded-lg object-cover border">
+        {% else %}
+            <div class="w-10 h-10 bg-slate-200 rounded-lg"></div>
+        {% endif %}
 
-            {% if product.image_url %}
-                <img src="{{ product.image_url }}" class="w-10 h-10 rounded-lg object-cover border">
-            {% else %}
-                <div class="w-10 h-10 bg-slate-200 rounded-lg"></div>
-            {% endif %}
-
-            <div>
-                <p class="font-medium">{{ product.name }}</p>
-                <p class="text-xs text-slate-400">ID: {{ product.id }}</p>
-            </div>
-
+        <div>
+            <p class="font-medium">{{ product.name }}</p>
+            <p class="text-xs text-slate-400">SKU: {{ product.sku|default:"—" }}</p>
         </div>
-    </td>
+    </div>
+</td>
 
-    <td class="px-4 py-3 text-slate-600">
-        {{ product.category.name|default:"No category" }}
-    </td>
+<td class="px-4 py-3 text-slate-600">
+    {{ product.category.name|default:"No category" }}
+</td>
 
-    <td class="px-4 py-3">₱{{ product.selling_price }}</td>
+<td class="px-4 py-3">₱{{ product.selling_price|default:"0" }}</td>
+<td class="px-4 py-3">{{ product.stock_qty|default:"0" }}</td>
 
-    <td class="px-4 py-3">{{ product.stock_qty }}</td>
+<td class="px-4 py-3">
+    <span class="px-3 py-1 text-xs bg-green-100 rounded-full">
+        {{ product.status }}
+    </span>
+</td>
 
-    <td class="px-4 py-3">
-        <span class="px-3 py-1 text-xs bg-slate-100 rounded-full">
-            {{ product.status }}
-        </span>
-    </td>
+<td class="px-4 py-3 relative">
 
-    <td class="px-4 py-3 relative">
+    <button class="p-2" onclick="toggleMenu(event, '{{ product.id }}')">⋮</button>
 
-        <button class="menu-btn p-2" onclick="toggleMenu('{{ product.id }}')">⋮</button>
+    <div id="menu-{{ product.id }}"
+         class="hidden absolute right-0 mt-2 w-44 bg-white border rounded-lg shadow z-50">
 
-        <div id="menu-{{ product.id }}"
-             class="hidden absolute right-0 mt-2 w-40 bg-white border rounded-lg shadow z-50">
+        <button class="block w-full text-left px-4 py-2 hover:bg-slate-50"
+            onclick="openEditModal(
+                '{{ product.id }}',
+                '{{ product.name|escapejs }}',
+                '{{ product.category.id|default:'' }}',
+                '{{ product.category.name|default:''|escapejs }}',
+                '{{ product.selling_price }}',
+                '{{ product.stock_qty }}',
+                '{{ product.status|escapejs }}',
+                '{{ product.sku|default:''|escapejs }}',
+                '{{ product.cost_price|default:'' }}',
+                '{{ product.reorder_level|default:'' }}',
+                '{{ product.unit|default:''|escapejs }}',
+                '{{ product.supplier.id|default:'' }}'
+            )">
+            Edit
+        </button>
 
-            <button class="w-full text-left px-4 py-2 hover:bg-slate-50"
-                onclick="openEditModal(
-                    '{{ product.id }}',
-                    '{{ product.name|escapejs }}',
-                    '{{ product.category.id|default:'' }}',
-                    '{{ product.selling_price }}',
-                    '{{ product.stock_qty }}',
-                    '{{ product.status|escapejs }}'
-                )">
-                ✏️ Edit
+        <!-- DELETE (NO MODAL, DIRECT REDIRECT) -->
+        <form method="POST" action="{% url 'product_delete' product.id %}">
+            {% csrf_token %}
+            <button type="submit"
+                onclick="return confirm('Delete this product?')"
+                class="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50">
+                Delete
             </button>
+        </form>
+    </div>
 
-            <button class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
-                onclick="openDeleteModal('{{ product.id }}')">
-                🗑 Delete
-            </button>
-
-        </div>
-
-    </td>
-
+</td>
 </tr>
 {% endfor %}
-
 </tbody>
 </table>
 </div>
 
 <!-- ================= PRODUCT MODAL ================= -->
 <div id="productModal" class="fixed inset-0 hidden z-50">
-
 <div class="absolute inset-0 bg-black/40"></div>
 
 <div class="relative flex items-center justify-center min-h-screen p-4">
 
 <form method="POST" enctype="multipart/form-data"
-      action="/admin-panel/products/upsert/"
+      action="{% url 'product_upsert' %}"
       class="bg-white w-full max-w-xl rounded-xl shadow-lg p-6 relative">
 
     {% csrf_token %}
 
-    <!-- EXIT -->
     <button type="button"
         onclick="closeProductModal()"
-        class="absolute top-3 right-3 text-slate-500 hover:text-red-600 text-xl">
-        ✕
-    </button>
+        class="absolute top-3 right-3 text-slate-500 hover:text-red-600 text-xl">✕</button>
 
     <h2 id="modalTitle" class="text-lg font-semibold mb-4">Add Product</h2>
 
     <input type="hidden" name="product_id" id="product_id">
 
-    <input type="text" name="name" id="name"
-        class="w-full border p-2 mb-2 rounded"
-        placeholder="Product Name">
+    <input name="name" id="name" class="w-full border p-2 mb-2 rounded" placeholder="Product Name">
+    <input name="sku" id="sku" class="w-full border p-2 mb-2 rounded" placeholder="SKU">
 
-    <input type="number" name="selling_price" id="price"
-        class="w-full border p-2 mb-2 rounded"
-        placeholder="Price">
+    <input name="cost_price" id="cost_price" type="number" step="0.01"
+        class="w-full border p-2 mb-2 rounded" placeholder="Cost Price">
 
-    <input type="number" name="stock_qty" id="stock"
-        class="w-full border p-2 mb-2 rounded"
-        placeholder="Stock">
+    <input name="selling_price" id="price" type="number" step="0.01"
+        class="w-full border p-2 mb-2 rounded" placeholder="Selling Price">
+
+    <input name="stock_qty" id="stock" type="number"
+        class="w-full border p-2 mb-2 rounded" placeholder="Stock">
+
+    <input name="reorder_level" id="reorder_level" type="number"
+        class="w-full border p-2 mb-2 rounded" placeholder="Reorder Level">
+
+    <input name="unit" id="unit"
+        class="w-full border p-2 mb-2 rounded" placeholder="Unit">
+
+    <select name="supplier" id="supplier"
+        class="w-full border p-2 mb-3 rounded">
+        <option value="">Select Supplier</option>
+        {% for s in suppliers %}
+            <option value="{{ s.id }}">{{ s.name }}</option>
+        {% endfor %}
+    </select>
 
     <select name="status" id="status"
         class="w-full border p-2 mb-3 rounded">
@@ -146,11 +157,11 @@
         <option value="discontinued">Discontinued</option>
     </select>
 
-    <!-- ================= CATEGORY TREE SELECTOR ================= -->
+    <!-- CATEGORY -->
     <button type="button"
         onclick="openCategoryModal()"
         class="w-full border p-2 rounded text-left hover:bg-slate-50">
-        🗂 Select Category
+        Select Category
     </button>
 
     <input type="hidden" name="category" id="selected_category">
@@ -167,13 +178,12 @@
     </button>
 
 </form>
-
 </div>
 </div>
 
-<!-- ================= CATEGORY MODAL (TREE STYLE) ================= -->
+<!-- ================= CATEGORY MODAL ================= -->
+<!-- ================= CATEGORY MODAL ================= -->
 <div id="categoryModal" class="fixed inset-0 hidden z-50">
-
 <div class="absolute inset-0 bg-black/40"></div>
 
 <div class="relative flex items-center justify-center min-h-screen p-4">
@@ -185,91 +195,101 @@
         <button onclick="closeCategoryModal()" class="text-xl">✕</button>
     </div>
 
-    <!-- SEARCH -->
-    <div class="p-4 border-b">
-        <input type="text"
-            placeholder="Search categories..."
-            onkeyup="filterCategories(this.value)"
-            class="w-full border p-2 rounded">
-    </div>
+    <div class="p-4 space-y-2">
 
-    <div class="p-4 max-h-[400px] overflow-y-auto">
-
-        <!-- MAIN / NONE -->
-        <label class="flex items-center gap-2 p-2 hover:bg-slate-50 rounded">
-            <input type="radio" name="cat" onclick="selectCategory('', 'No category')">
-            <span class="text-sm text-slate-600">No Category</span>
+        <!-- NO CATEGORY -->
+        <label class="flex items-center gap-2">
+            <input type="radio" name="cat" value=""
+                data-name="No category"
+                onchange="selectCategory(this.value, this.dataset.name)">
+            No Category
         </label>
 
+        <!-- SINGLE LOOP (CLEAN TREE STRUCTURE) -->
         {% for category in categories %}
+        <div class="border rounded-lg p-2">
 
-        <div class="border rounded mb-2 category-item">
+            <!-- PARENT CATEGORY -->
+            <label class="flex items-center gap-2 font-medium">
+                <input type="radio" name="cat"
+                    value="{{ category.id }}"
+                    data-name="{{ category.name }}"
+                    onchange="selectCategory(this.value, this.dataset.name)">
+                {{ category.name }}
+            </label>
 
-            <!-- PARENT -->
-            <div class="flex justify-between items-center p-3 bg-slate-50">
-
-                <label class="flex items-center gap-2">
-                    <input type="radio" name="cat"
-                        onclick="selectCategory('{{ category.id }}','{{ category.name }}')">
-
-                    <span class="font-medium category-name">
-                        {{ category.name }}
-                    </span>
-                </label>
-
-                <button type="button"
-                    onclick="toggleSub('{{ category.id }}')"
-                    class="text-xs text-slate-600">
-                    ▼
-                </button>
-
-            </div>
-
-            <!-- SUBCATEGORIES -->
-            <div id="sub-{{ category.id }}" class="hidden">
+            <!-- CHILDREN (SUBCATEGORIES) -->
+            {% if category.subcategories.all %}
+            <div class="ml-6 mt-2 space-y-1 border-l pl-3">
 
                 {% for sub in category.subcategories.all %}
-
-                <div class="flex items-center justify-between p-3 pl-6 border-t">
-
-                    <label class="flex items-center gap-2">
-                        <input type="radio" name="cat"
-                            onclick="selectCategory('{{ sub.id }}','{{ sub.name }}')">
-
-                        <span class="text-sm text-slate-600">
-                            {{ sub.name }}
-                        </span>
-                    </label>
-
-                </div>
-
+                <label class="flex items-center gap-2 text-sm text-slate-600">
+                    <input type="radio" name="cat"
+                        value="{{ sub.id }}"
+                        data-name="{{ sub.name }}"
+                        onchange="selectCategory(this.value, this.dataset.name)">
+                    {{ sub.name }}
+                </label>
                 {% endfor %}
 
             </div>
+            {% endif %}
 
         </div>
-
         {% endfor %}
 
     </div>
-
-</div>
-
 </div>
 </div>
-
+</div>
 <!-- ================= JS ================= -->
 <script>
 
-/* PRODUCT MODAL */
-function openAddModal() {
-    document.getElementById("productModal").classList.remove("hidden");
-    document.getElementById("modalTitle").innerText = "Add Product";
-    document.getElementById("product_id").value = "";
+let openMenuId = null;
+
+function toggleMenu(event, id) {
+    event.stopPropagation();
+
+    if (openMenuId && openMenuId !== id) {
+        document.getElementById("menu-" + openMenuId)?.classList.add("hidden");
+    }
+
+    const menu = document.getElementById("menu-" + id);
+    menu.classList.toggle("hidden");
+
+    openMenuId = id;
 }
 
-function openEditModal(id, name, category, price, stock, status) {
+document.addEventListener("click", function () {
+    if (openMenuId) {
+        document.getElementById("menu-" + openMenuId)?.classList.add("hidden");
+        openMenuId = null;
+    }
+});
+
+/* DELETE ACTION (NO MODAL) */
+function deleteProduct(id) {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+
+    window.location.href = `/admin-panel/products/${id}/delete/`;
+}
+
+function openAddModal() {
     document.getElementById("productModal").classList.remove("hidden");
+    document.querySelector("#productModal form").reset();
+
+    document.getElementById("modalTitle").innerText = "Add Product";
+    document.getElementById("product_id").value = "";
+    document.getElementById("selected_category_label").innerText = "";
+}
+
+function openEditModal(
+    id, name, categoryId, categoryName,
+    price, stock, status,
+    sku, cost_price,
+    reorder_level, unit, supplier_id
+) {
+    openAddModal();
 
     document.getElementById("modalTitle").innerText = "Edit Product";
 
@@ -279,18 +299,21 @@ function openEditModal(id, name, category, price, stock, status) {
     document.getElementById("stock").value = stock;
     document.getElementById("status").value = status;
 
-    if (category) {
-        document.getElementById("selected_category").value = category;
-        document.getElementById("selected_category_label").innerText =
-            "Category selected";
-    }
+    document.getElementById("sku").value = sku || "";
+    document.getElementById("cost_price").value = cost_price || "";
+    document.getElementById("reorder_level").value = reorder_level || "";
+    document.getElementById("unit").value = unit || "";
+    document.getElementById("supplier").value = supplier_id || "";
+
+    document.getElementById("selected_category").value = categoryId || "";
+    document.getElementById("selected_category_label").innerText =
+        categoryId ? "Selected: " + categoryName : "No category selected";
 }
 
 function closeProductModal() {
     document.getElementById("productModal").classList.add("hidden");
 }
 
-/* CATEGORY */
 function openCategoryModal() {
     document.getElementById("categoryModal").classList.remove("hidden");
 }
@@ -300,41 +323,12 @@ function closeCategoryModal() {
 }
 
 function selectCategory(id, name) {
-    document.getElementById("selected_category").value = id;
+    document.getElementById("selected_category").value = id || "";
     document.getElementById("selected_category_label").innerText =
-        "Selected: " + name;
+        id ? "Selected: " + name : "No category selected";
+
     closeCategoryModal();
 }
-
-function toggleSub(id) {
-    document.getElementById("sub-" + id).classList.toggle("hidden");
-}
-
-/* SEARCH */
-function filterCategories(value) {
-    document.querySelectorAll(".category-item").forEach(el => {
-        el.style.display =
-            el.innerText.toLowerCase().includes(value.toLowerCase())
-            ? "block" : "none";
-    });
-}
-
-/* MENU */
-function toggleMenu(id) {
-    const menu = document.getElementById("menu-" + id);
-
-    document.querySelectorAll('[id^="menu-"]').forEach(m => {
-        if (m !== menu) m.classList.add("hidden");
-    });
-
-    menu.classList.toggle("hidden");
-}
-
-document.addEventListener("click", function(e) {
-    if (!e.target.closest("button")) {
-        document.querySelectorAll('[id^="menu-"]').forEach(m => m.classList.add("hidden"));
-    }
-});
 
 </script>
 

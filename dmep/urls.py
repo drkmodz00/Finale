@@ -4,7 +4,6 @@ from .views import customer_views, cashier_views, admin_views
 urlpatterns = [
     path('login/', admin_views.login_view, name='login'),
     path('logout/', admin_views.logout_view, name='logout'),
-    path('signup/', admin_views.signup_view, name='signup'),
 
     path('', customer_views.dashboard, name='dashboard'),
     path('products/', customer_views.product_list, name='products'),
@@ -57,6 +56,7 @@ urlpatterns = [
     path('admin-panel/', admin_views.dashboard, name='admin_dashboard'),
 
     path('admin-panel/categories/', admin_views.category_list, name='category_list'),
+
     # path('admin-panel/categories/add/', admin_views.category_create, name='category_create'),
     # path('admin-panel/categories/<int:pk>/edit/', admin_views.category_edit, name='category_edit'),
     # path('admin-panel/categories/<int:pk>/delete/', admin_views.category_delete, name='category_delete'),
@@ -65,6 +65,10 @@ urlpatterns = [
     # SUPPLIERS (READ ONLY)
     # =========================================================
     path('admin-panel/suppliers/', admin_views.supplier_list, name='supplier_list'),
+    path('admin-panel/supplier/<int:supplier_id>/pos/', admin_views.supplier_pos, name='supplier_pos'),
+    path("supplier/<int:supplier_id>/purchase/bulk/", admin_views.po_bulk_create, name="po_bulk_create"),
+    path("supplier/<int:supplier_id>/purchase/quick/", admin_views.po_quick_purchase, name="po_quick_purchase"),
+    path("ajax/supplier-products/", admin_views.ajax_supplier_products, name="ajax_supplier_products"),
     # path('admin-panel/suppliers/add/', admin_views.supplier_create, name='supplier_create'),
     # path('admin-panel/suppliers/<int:pk>/edit/', admin_views.supplier_edit, name='supplier_edit'),
     # path('admin-panel/suppliers/<int:pk>/delete/', admin_views.supplier_delete, name='supplier_delete'),
@@ -74,6 +78,8 @@ urlpatterns = [
     # =========================================================
     path('admin-panel/customers/', admin_views.customer_list, name='customer_list'),
     path('admin-panel/customers/<int:pk>/', admin_views.customer_detail, name='customer_details'),
+    path('admin-panel/customers/<int:pk>/delete/', admin_views.customer_delete, name='customer_delete'),
+    path('order/<int:sale_id>/update-status/', admin_views.update_order_status, name='update_order_status'),
     
 
 
@@ -82,7 +88,7 @@ urlpatterns = [
     # =========================================================
     path('admin-panel/products/', admin_views.product_list, name='product_list'),
     path("admin-panel/products/upsert/", admin_views.product_upsert, name="product_upsert"),
-    path('admin-panel/products/<int:pk>/delete/', admin_views.product_delete, name='product_delete'),
+    path("admin-panel/products/<int:pk>/delete/", admin_views.product_delete, name="product_delete"),
 
 
     # =========================================================
@@ -103,15 +109,21 @@ urlpatterns = [
     path('admin-panel/sales/<int:pk>/delete/', admin_views.sale_delete, name='sale_delete'),
 
     # =========================================================
-    # STOCK MOVEMENTS (READ ONLY)
+    # STOCK MOVEMENTS
     # =========================================================
-    path('admin-panel/stock/', admin_views.stock_movement_list, name='stock_movement_list'),
-
+    path("admin-panel/stock-movements/", admin_views.stock_movement_list, name="stock_movement_list"),
 
     # =========================================================
     # PURCHASE ORDERS
     # =========================================================
     path('admin-panel/purchase-orders/', admin_views.po_list, name='po_list'),
     path('admin-panel/purchase-orders/new/', admin_views.po_create, name='po_create'),
-    path('admin-panel/purchase-orders/<int:pk>/receive/', admin_views.po_receive, name='po_receive'),
+    path('admin-panel/purchase-orders/<int:po_id>/receive/', admin_views.po_receive, name='po_receive'),
+    path('admin-panel/purchase-orders/<int:po_id>/update/', admin_views.po_update, name='po_update'),
+    path('admin-panel/purchase-orders/<int:po_id>/delete/', admin_views.po_delete, name='po_delete'),
+
+    path('po/<int:po_id>/items/', admin_views.po_items, name='po_items'),
+    path('po/<int:po_id>/items/add/', admin_views.po_item_add, name='po_item_add'),
+    path('po/item/<int:pk>/update/', admin_views.po_item_update, name='po_item_update'),
+    path('po/item/<int:pk>/delete/', admin_views.po_item_delete, name='po_item_delete'),
 ]
