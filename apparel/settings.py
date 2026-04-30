@@ -7,6 +7,7 @@ import os
 from dotenv import load_dotenv
 import dj_database_url
 import cloudinary
+import cloudinary_storage
 
 # ──────────────────────────────────────────────
 # BASE DIRECTORY
@@ -56,7 +57,14 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 # ──────────────────────────────────────────────
 # URLS
 # ──────────────────────────────────────────────
@@ -153,7 +161,6 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # ──────────────────────────────────────────────
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 # ──────────────────────────────────────────────
 # LOGIN SETTINGS
 # ──────────────────────────────────────────────

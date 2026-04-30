@@ -81,7 +81,6 @@ class Product(models.Model):
     supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
     name = models.CharField(max_length=255)
     sku = models.CharField(max_length=100, blank=True, null=True)
-    barcode = models.CharField(max_length=100, blank=True, null=True)
     cost_price = models.FloatField(blank=True, null=True)
     selling_price = models.FloatField(blank=True, null=True)
     stock_qty = models.IntegerField(blank=True, null=True)
