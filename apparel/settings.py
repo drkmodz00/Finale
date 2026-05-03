@@ -6,8 +6,6 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 import dj_database_url
-import cloudinary
-import cloudinary_storage
 
 # ──────────────────────────────────────────────
 # BASE DIRECTORY
@@ -23,7 +21,7 @@ load_dotenv(BASE_DIR / ".env")
 # ──────────────────────────────────────────────
 
 SECRET_KEY = os.getenv("SECRET_KEY", "change-this-in-production-use-env-variable")
-DEBUG = os.getenv("DEBUG", "False") == "True"
+DEBUG =True
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
 # ──────────────────────────────────────────────
 # APPLICATIONS
@@ -36,10 +34,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'dmep',
-    'cloudinary',
-    'cloudinary_storage',
 ]
 
 # ──────────────────────────────────────────────
@@ -57,19 +52,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-STORAGES = {
-    "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
-CLOUDINARY_STORAGE = {
-    "CLOUD_NAME": os.getenv("CLOUDINARY_CLOUD_NAME"),
-    "API_KEY": os.getenv("CLOUDINARY_API_KEY"),
-    "API_SECRET": os.getenv("CLOUDINARY_API_SECRET"),
-}
 # ──────────────────────────────────────────────
 # URLS
 # ──────────────────────────────────────────────
@@ -154,7 +136,8 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # ──────────────────────────────────────────────
 # MEDIA FILES
 # ──────────────────────────────────────────────
-
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 # ──────────────────────────────────────────────
 # DEFAULT PRIMARY KEY
 # ──────────────────────────────────────────────

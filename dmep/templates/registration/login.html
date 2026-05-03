@@ -2,46 +2,79 @@
 
 {% block content %}
 
-<div class="min-h-screen flex items-center justify-center px-4">
+<div class="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-blue-50 to-indigo-100">
 
-  <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg">
+  <div class="w-full max-w-md bg-white/90 backdrop-blur-lg p-8 rounded-3xl shadow-2xl transition-all duration-300">
 
-    <h2 class="text-2xl font-bold text-center mb-6">Welcome Back</h2>
+<!-- Header -->
+<div class="text-center mb-8">
+  <h2 class="text-3xl font-extrabold text-gray-800 tracking-tight">
+    Welcome Back
+  </h2>
+  <p class="text-gray-500 text-sm mt-2">
+    Sign in to continue
+  </p>
+</div>
 
-    <!-- ERROR MESSAGES -->
-    {% if messages %}
-      <div class="mb-4">
-        {% for message in messages %}
-          <p class="text-red-500 text-sm text-center">{{ message }}</p>
-        {% endfor %}
+<!-- Errors -->
+{% if messages %}
+  <div class="mb-5 space-y-2">
+    {% for message in messages %}
+      <div class="bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded-lg text-sm text-center">
+        {{ message }}
       </div>
-    {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}
 
-    <form method="POST" action="{% url 'login' %}">
-      {% csrf_token %}
+<form method="POST" action="{% url 'login' %}" class="space-y-5">
+  {% csrf_token %}
 
-      <div class="space-y-4">
+  <!-- Username -->
+  <div>
+    <label class="text-xs text-gray-500">Username</label>
+    <input type="text"
+           name="username"
+           required
+           class="w-full mt-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+           placeholder="Enter your username">
+  </div>
 
-        <input type="text"
-               name="username"
-               required
-               placeholder="Username"
-               class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+  <!-- Password -->
+  <div class="relative">
+    <label class="text-xs text-gray-500">Password</label>
 
-        <input type="password"
-               name="password"
-               required
-               placeholder="Password"
-               class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+    <div class="relative mt-1">
+      <input type="password"
+            id="password"
+            name="password"
+            required
+            class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+            placeholder="Enter your password">
 
-      </div>
+      <!-- Toggle Button -->
+      <!-- <button type="button"
+              onclick="togglePassword()"
+              class="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600 transition">
+        <span id="eyeIcon">👁</span>
+      </button> -->
+    </div>
+  </div>
+  <!-- Options -->
+  <div class="flex items-center justify-between text-sm">
+    <label class="flex items-center gap-2 text-gray-600">
+      <input type="checkbox" name="remember" class="rounded text-blue-600 focus:ring-blue-500">
+      Remember me
+    </label>
+  </div>
 
-      <button type="submit"
-              class="w-full mt-6 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
-        Login
-      </button>
+  <!-- Submit -->
+  <button type="submit"
+          class="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold tracking-wide hover:bg-blue-700 hover:shadow-lg active:scale-[0.98] transition-all duration-200">
+    Login
+  </button>
 
-    </form>
+</form>
 
   </div>
 

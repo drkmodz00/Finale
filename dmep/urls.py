@@ -14,8 +14,7 @@ urlpatterns = [
     path('cart/add/<int:product_id>/', customer_views.add_to_cart, name='cart_add'),
     path('cart/update/<int:product_id>/<str:action>/', customer_views.update_cart, name='update_cart'),
     path('cart/remove/<int:product_id>/', customer_views.remove_from_cart, name='cart_remove'),
-    path('cart/clear/', customer_views.clear_cart, name='clear_cart'),
-    path("cart/reset/", customer_views.clear_cart_session),
+    path('cart/reset/', customer_views.clear_cart, name='clear_cart'),
     path("cart/selected/", customer_views.update_selected_items, name="update_selected_items"),
 
     path('checkout/', customer_views.checkout_view, name='checkout'),
@@ -30,92 +29,39 @@ urlpatterns = [
     path("help-center/", customer_views.help_center, name="help_center"),
     path("subscribe-newsletter/", customer_views.subscribe_newsletter, name="subscribe_newsletter"),
 
-    # # ==================================================
-    # # Cashier SIDE
-    # # ==================================================
 
-    # path('pos/dashboard/', cashier_views.pos_dashboard, name='pos_dashboard'),
-
-    # path("pos/sell/", cashier_views.pos_sell, name="pos_sell"),
-    
-    # path('pos/cart/', cashier_views.cart_view, name='pos_cart'),
-    # path("pos/add/<int:pid>/", cashier_views.add_to_cart, name="pos_add"),
-    # path("pos/update/<int:pid>/", cashier_views.update_cart, name="pos_update"),
-    # path("pos/remove/<int:pid>/", cashier_views.remove_from_cart, name="pos_remove"),   
-
-    # path('pos/checkout/', cashier_views.checkout_view, name='pos_checkout'),
-    
-    # path('pos/checkout/process/', cashier_views.process_sale, name='process_checkout'),
-    # # path('pos/process/', cashier.process_sale, name='pos_process'),    
-
-
-    # ==================================================
-    # ADMIN SIDE
-    # ==================================================
 
     path('admin-panel/', admin_views.dashboard, name='admin_dashboard'),
 
     path('admin-panel/categories/', admin_views.category_list, name='category_list'),
 
-    # path('admin-panel/categories/add/', admin_views.category_create, name='category_create'),
-    # path('admin-panel/categories/<int:pk>/edit/', admin_views.category_edit, name='category_edit'),
-    # path('admin-panel/categories/<int:pk>/delete/', admin_views.category_delete, name='category_delete'),
-    
-    # =========================================================
-    # SUPPLIERS (READ ONLY)
-    # =========================================================
-    path('admin-panel/suppliers/', admin_views.supplier_list, name='supplier_list'),
-    path('admin-panel/supplier/<int:supplier_id>/pos/', admin_views.supplier_pos, name='supplier_pos'),
-    path("supplier/<int:supplier_id>/purchase/bulk/", admin_views.po_bulk_create, name="po_bulk_create"),
-    path("supplier/<int:supplier_id>/purchase/quick/", admin_views.po_quick_purchase, name="po_quick_purchase"),
-    path("ajax/supplier-products/", admin_views.ajax_supplier_products, name="ajax_supplier_products"),
-    # path('admin-panel/suppliers/add/', admin_views.supplier_create, name='supplier_create'),
-    # path('admin-panel/suppliers/<int:pk>/edit/', admin_views.supplier_edit, name='supplier_edit'),
-    # path('admin-panel/suppliers/<int:pk>/delete/', admin_views.supplier_delete, name='supplier_delete'),
-    
-    # =========================================================
-    # CUSTOMERS (READ ONLY)
-    # =========================================================
     path('admin-panel/customers/', admin_views.customer_list, name='customer_list'),
     path('admin-panel/customers/<int:pk>/', admin_views.customer_detail, name='customer_details'),
     path('admin-panel/customers/<int:pk>/delete/', admin_views.customer_delete, name='customer_delete'),
     path('order/<int:sale_id>/update-status/', admin_views.update_order_status, name='update_order_status'),
     
 
+    path("admin-panel/purchase/", admin_views.purchase, name="purchase"),
+    path("purchase/add/<int:product_id>/", admin_views.purchase_add, name="purchase_add"),
+    path("purchase/remove/<int:product_id>/", admin_views.purchase_remove, name="purchase_remove"),
+    path("purchase/checkout/", admin_views.purchase_checkout, name="purchase_checkout"),
+    path("purchase/checkout/page/", admin_views.purchase_checkout_page, name="purchase_checkout_page"),
+    path("purchase/finalize/", admin_views.purchase_finalize, name="purchase_finalize"),
 
-    # =========================================================
-    # PRODUCTS (LIST + URL CRUD)
-    # =========================================================
     path('admin-panel/products/', admin_views.product_list, name='product_list'),
     path("admin-panel/products/upsert/", admin_views.product_upsert, name="product_upsert"),
     path("admin-panel/products/<int:pk>/delete/", admin_views.product_delete, name="product_delete"),
 
 
-    # =========================================================
-    # DISCOUNTS (LIST + URL CRUD)
-    # =========================================================
     path('admin-panel/discounts/', admin_views.discounts, name='discounts'),
-    # path('admin-panel/discounts/add/', admin_views.discount_create, name='discount_create'),
-    # path('admin-panel/discounts/<int:pk>/edit/', admin_views.discount_edit, name='discount_edit'),
-    # path('admin-panel/discounts/<int:pk>/delete/', admin_views.discount_delete, name='discount_delete'),
 
-
-    # =========================================================
-    # SALES (LIST + ACTION)
-    # =========================================================
     path('admin-panel/sales/', admin_views.sale_list, name='sale_list'),
     path('admin-panel/sales/new/', admin_views.sale_create, name='sale_create'),
     path('admin-panel/sales/<int:pk>/void/', admin_views.sale_void, name='sale_void'),
     path('admin-panel/sales/<int:pk>/delete/', admin_views.sale_delete, name='sale_delete'),
 
-    # =========================================================
-    # STOCK MOVEMENTS
-    # =========================================================
     path("admin-panel/stock-movements/", admin_views.stock_movement_list, name="stock_movement_list"),
 
-    # =========================================================
-    # PURCHASE ORDERS
-    # =========================================================
     path('admin-panel/purchase-orders/', admin_views.po_list, name='po_list'),
     path('admin-panel/purchase-orders/new/', admin_views.po_create, name='po_create'),
     path('admin-panel/purchase-orders/<int:po_id>/receive/', admin_views.po_receive, name='po_receive'),
@@ -126,4 +72,7 @@ urlpatterns = [
     path('po/<int:po_id>/items/add/', admin_views.po_item_add, name='po_item_add'),
     path('po/item/<int:pk>/update/', admin_views.po_item_update, name='po_item_update'),
     path('po/item/<int:pk>/delete/', admin_views.po_item_delete, name='po_item_delete'),
+
+    path("debug/reset-session/", customer_views.reset_session),
+    path("pos-terminal/", admin_views.pos_terminal, name="pos_terminal"),
 ]

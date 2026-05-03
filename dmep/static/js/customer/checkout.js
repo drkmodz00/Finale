@@ -1,18 +1,22 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const paymentCards = document.querySelectorAll('.payment-card');
+document.getElementById("phone").addEventListener("blur", function () {
 
-    paymentCards.forEach(card => {
-        card.addEventListener('click', function() {
-            // 1. Remove active class from all
-            paymentCards.forEach(c => c.classList.remove('active'));
-            
-            // 2. Add to clicked
-            this.classList.add('active');
-            
-            // 3. Check the internal radio button
-            const radio = this.querySelector('input[type="radio"]');
-            if (radio) radio.checked = true;
+    const phone = this.value;
+    if (!phone) return;
+
+    fetch(`/ajax/customer-by-phone/?phone=${phone}`)
+        .then(res => res.json())
+        .then(data => {
+
+            if (data.exists) {
+                document.getElementById("customer_id").value = data.id;
+                document.getElementById("full_name").value = data.full_name;
+                document.getElementById("email").value = data.email;
+                document.getElementById("address").value = data.address;
+            } else {
+                document.getElementById("customer_id").value = "";
+            }
+
         });
-    });
+
 });
 

@@ -4,7 +4,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.models import User
-from cloudinary.models import CloudinaryField
+from django.db import transaction
 
 class Profile(models.Model):
     ROLE_CHOICES = (
@@ -87,7 +87,8 @@ class Product(models.Model):
     reorder_level = models.IntegerField(blank=True, null=True)
     unit = models.CharField(max_length=50, blank=True, null=True)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, blank=True, null=True)
-    img = CloudinaryField('image', blank=True, null=True)
+    img = models.ImageField(upload_to='products/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
         return self.name
@@ -163,20 +164,61 @@ class SaleItem(models.Model):
         return f"SaleItem #{self.id} - {self.product}"
     
 class StockMovement(models.Model):
-    TYPE_CHOICES = [('in', 'Stock In'), ('out', 'Stock Out'), ('adjustment', 'Adjustment'), ('return', 'Return')]
- 
+
+    TYPE_CHOICES = [
+        ('in', 'Stock In'),
+        ('out', 'Stock Out'),
+        ('adjustment', 'Adjustment'),
+        ('return', 'Return')
+    ]
+
     po_item = models.ForeignKey('POItem', on_delete=models.SET_NULL, null=True, blank=True)
     sale_item = models.ForeignKey('SaleItem', on_delete=models.SET_NULL, null=True, blank=True)
+
     product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='movements')
+
     type = models.CharField(max_length=50, choices=TYPE_CHOICES)
     quantity = models.IntegerField()
     reason = models.TextField(blank=True, null=True)
+
     moved_at = models.DateTimeField(auto_now_add=True)
- 
+
     def __str__(self):
         return f"{self.type} - {self.product} ({self.quantity})"
- 
- 
+
+    # ✅ THIS IS THE MOST IMPORTANT PART
+    def save(self, *args, **kwargs):
+
+        is_new = self.pk is None
+        product = self.product
+
+        if is_new:
+            # ✅ VALIDATE FIRST (before saving)
+            if self.type == 'out' and (product.stock_qty or 0) < self.quantity:
+                raise ValueError("Not enough stock")
+
+        # ✅ ATOMIC TRANSACTION (prevents partial save)
+        with transaction.atomic():
+
+            super().save(*args, **kwargs)
+
+            if not is_new:
+                return
+
+            # ✅ APPLY STOCK CHANGES
+            if self.type in ['in', 'return']:
+                product.stock_qty = (product.stock_qty or 0) + self.quantity
+
+            elif self.type == 'out':
+                product.stock_qty -= self.quantity
+
+            elif self.type == 'adjustment':
+                product.stock_qty += self.quantity
+                # OR:
+                # product.stock_qty = self.quantity
+
+            product.save()
+
 class PurchaseOrder(models.Model):
     STATUS_CHOICES = [('pending', 'Pending'), ('received', 'Received'), ('partial', 'Partial'), ('cancelled', 'Cancelled')]
  
@@ -189,23 +231,21 @@ class PurchaseOrder(models.Model):
     def __str__(self):
         return f"PO #{self.id} - {self.supplier}"
  
- 
+    def update_total(self):
+        self.total_cost = sum(self.po_items.values_list('line_total', flat=True))
+        self.save(update_fields=['total_cost']) 
+
 class POItem(models.Model):
     po = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, related_name='po_items')
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, related_name='po_items')
+
     qty_ordered = models.IntegerField()
-
-    # this should be in purchase order?
     qty_received = models.IntegerField(default=0)
-
-
     unit_cost = models.FloatField()
- 
-    def __str__(self):
-        return f"POItem #{self.id} - {self.product}"
 
-
-# added models
+    @property
+    def line_total(self):
+        return (self.qty_ordered or 0) * (self.unit_cost or 0)
 
 class HelpCenter(models.Model):
     email = models.EmailField(default="support@dmep.com")
@@ -255,3 +295,4 @@ class OrderStatusHistory(models.Model):
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE)
     status = models.CharField(max_length=20)
     changed_at = models.DateTimeField(auto_now_add=True)
+

@@ -2,294 +2,399 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>{% block title %}DMEP | COLLECTION{% endblock %}</title>
+<meta charset="UTF-8">
+<title>{% block title %}DMEP | COLLECTION{% endblock %}</title>
 
-    {% load static %}
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Tailwind -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <script>
-    tailwind.config = {
-        theme: {
-            extend: {
-                colors: {
-                    primary: "#0040e0",
-                    surface: "#fcf9f8",
-                }
-            }
-        }
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary: "#0f172a",
+        accent: "#2563eb",
+        soft: "#f8fafc",
+        line: "#e5e7eb"
+      },
+      fontFamily: {
+        sans: ["Inter", "sans-serif"]
+      }
     }
-    </script>
+  }
+}
+</script>
 
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Icons -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
-    {% block extra_css %}{% endblock %}
 </head>
 
-<body class="bg-[#fcf9f8] font-[Inter] pb-16 md:pb-0">
+<body class="bg-soft text-slate-800 font-sans">
 
-<!-- ================= NAVBAR ================= -->
+<!-- ================= HEADER ================= -->
 <header id="navbar"
-  class="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-black/5 transition-all">
+class="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-line transition-all duration-300">
 
-  <nav class="max-w-[1400px] mx-auto h-20 px-6 flex items-center justify-between">
+<nav class="max-w-7xl mx-auto px-6 lg:px-10 h-20 flex items-center justify-between">
 
-    <div class="flex items-center gap-4">
-      <button id="menuBtn" class="md:hidden text-xl">
-        <i class="fa-solid fa-bars"></i>
-      </button>
+<!-- LEFT -->
+<div class="flex items-center gap-4">
 
-      <a href="{% url 'dashboard' %}"
-         class="text-[22px] font-extrabold tracking-tight text-black">
-        DMEP
-      </a>
+<button id="menuBtn"
+class="md:hidden w-10 h-10 rounded-xl hover:bg-gray-100 transition">
+<i class="fa-solid fa-bars"></i>
+</button>
+
+<a href="{% url 'dashboard' %}"
+class="text-2xl font-extrabold tracking-tight text-primary">
+DMEP
+</a>
+
+</div>
+
+<!-- CENTER -->
+<div class="hidden md:flex items-center gap-8 text-sm font-medium">
+
+<a href="{% url 'dashboard' %}"
+class="hover:text-accent transition {% if request.resolver_match.url_name == 'dashboard' %}text-accent{% endif %}">
+Home
+</a>
+
+<a href="{% url 'products' %}"
+class="hover:text-accent transition {% if request.resolver_match.url_name == 'products' %}text-accent{% endif %}">
+Shop
+</a>
+
+<a href="{% url 'order_history' %}" 
+class="hover:text-accent transition {% if request.resolver_match.url_name == 'order_history' %}text-accent{% endif %}">
+Orders
+</a>
+
+<a href="{% url 'help_center' %}" 
+class="hover:text-accent transition {% if request.resolver_match.url_name == 'help_center' %}text-accent{% endif %}">
+FAQ
+</a>
+
+</div>
+
+<!-- RIGHT -->
+<div class="flex items-center gap-3">
+
+
+<!-- Cart -->
+<a href="{% url 'cart' %}"
+class="relative w-10 h-10 rounded-xl hover:bg-gray-100 transition flex items-center justify-center">
+
+<i class="fa-solid fa-bag-shopping"></i>
+
+{% if cart_count %}
+<span class="absolute top-1 right-1 bg-accent text-white text-[10px] min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center">
+{{ cart_count }}
+</span>
+{% endif %}
+
+</a>
+
+<!-- Account -->
+<div class="relative">
+
+<button id="userBtn"
+class="w-10 h-10 rounded-xl hover:bg-gray-100 transition flex items-center justify-center">
+<i class="fa-solid fa-user"></i>
+</button>
+
+<div id="userMenu"
+class="hidden absolute right-0 mt-3 w-52 bg-white rounded-2xl shadow-xl border border-line overflow-hidden">
+
+{% if request.user.is_authenticated %}
+
+<div class="px-4 py-3 border-b text-sm">
+<p class="font-semibold">Welcome</p>
+<p class="text-gray-500 text-xs">{{ request.user.username }}</p>
+</div>
+
+<a href="#"
+class="block px-4 py-3 text-sm hover:bg-gray-50">
+My Account
+</a>
+
+<form method="POST" action="{% url 'logout' %}">
+{% csrf_token %}
+<button type="submit"
+class="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-50">
+Logout
+</button>
+</form>
+
+{% else %}
+
+<a href="{% url 'login' %}"
+class="block px-4 py-3 text-sm hover:bg-gray-50">
+Login
+</a>
+
+{% endif %}
+
+</div>
+</div>
+
+</div>
+
+</nav>
+
+<!-- MOBILE MENU -->
+<div id="mobileMenu"
+class="hidden md:hidden border-t border-line bg-white">
+
+<div class="px-6 py-5 space-y-4 text-sm font-medium">
+
+<a href="{% url 'dashboard' %}" class="block">Home</a>
+<a href="{% url 'products' %}" class="block">Shop</a>
+<a href="{% url 'order_history' %}" class="block">Orders</a>
+<a href="{% url 'help_center' %}" class="block">FAQ</a>
+
+</div>
+
+</div>
+
+</header>
+
+<!-- ================= MESSAGES ================= -->
+<main class="min-h-screen">
+
+{% if messages %}
+<div class="max-w-6xl mx-auto px-6 mt-6 space-y-3">
+{% for message in messages %}
+<div class="rounded-xl px-4 py-3 text-sm border
+{% if message.tags == 'success' %}bg-green-50 border-green-200 text-green-700{% endif %}
+{% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-700{% endif %}
+{% if message.tags == 'info' %}bg-blue-50 border-blue-200 text-blue-700{% endif %}">
+{{ message }}
+</div>
+{% endfor %}
+</div>
+{% endif %}
+
+{% block content %}{% endblock %}
+
+</main>
+
+<!-- ================= FOOTER ================= -->
+<!-- REPLACE YOUR ENTIRE FOOTER WITH THIS -->
+
+<footer class="mt-24 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white border-t border-white/10">
+
+  <div class="max-w-7xl mx-auto px-6 lg:px-10 py-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-14">
+
+    <!-- BRAND -->
+    <div>
+      <h3 class="text-3xl font-extrabold tracking-tight">DMEP</h3>
+
+      <p class="text-sm text-slate-300 mt-5 leading-7 max-w-xs">
+        Premium fashion essentials designed for confidence, comfort,
+        and everyday luxury.
+      </p>
+
+      <!-- <div class="flex gap-3 mt-6">
+
+        <a href="#"
+           class="w-10 h-10 rounded-xl bg-white/10 hover:bg-white hover:text-slate-900 transition flex items-center justify-center">
+          <i class="fab fa-facebook-f"></i>
+        </a>
+
+        <a href="#"
+           class="w-10 h-10 rounded-xl bg-white/10 hover:bg-white hover:text-slate-900 transition flex items-center justify-center">
+          <i class="fab fa-instagram"></i>
+        </a>
+
+        <a href="#"
+           class="w-10 h-10 rounded-xl bg-white/10 hover:bg-white hover:text-slate-900 transition flex items-center justify-center">
+          <i class="fab fa-tiktok"></i>
+        </a>
+
+      </div> -->
     </div>
 
-    <div class="hidden md:flex gap-10 items-center">
 
-      <a href="{% url 'dashboard' %}"
-         class="{% if request.resolver_match.url_name == 'dashboard' %}text-primary font-semibold{% endif %}">
-        Home
-      </a>
+    <!-- SHOP -->
+    <div>
+      <h4 class="font-semibold text-lg mb-6">Shop</h4>
 
-      <a href="{% url 'products' %}"
-         class="{% if request.resolver_match.url_name == 'products' %}text-primary font-semibold{% endif %}">
-        Shop
-      </a>
+      <ul class="space-y-3 text-sm text-slate-300">
 
-      <a href="{% url 'order_history' %}">Orders</a>
-      <a href="{% url 'help_center' %}">FAQ</a>
+        <li>
+          <a href="{% url 'products' %}"
+             class="hover:text-white transition">
+             All Products
+          </a>
+        </li>
 
+        {% for category in categories %}
+        <li>
+          <a href="{% url 'products' %}?category={{ category.id }}"
+             class="hover:text-white transition">
+             {{ category.name }}
+          </a>
+        </li>
+        {% endfor %}
+
+      </ul>
     </div>
 
-    <div class="flex items-center gap-5">
 
-      <!-- CART -->
-      <a href="{% url 'cart' %}"
-         id="cartIcon"
-         class="relative text-gray-600 hover:text-black transition">
+    <!-- SUPPORT -->
+    <div>
+      <h4 class="font-semibold text-lg mb-6">Support</h4>
 
-        <i class="fa-solid fa-bag-shopping text-lg"></i>
+      <ul class="space-y-3 text-sm text-slate-300">
 
-        {% if cart_count %}
-        <span class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">
-          {{ cart_count }}
-        </span>
-        {% endif %}
-      </a>
+        <li>
+          <a href="{% url 'help_center' %}#contact"
+             class="hover:text-white transition">
+             Contact Us
+          </a>
+        </li>
 
-      <!-- ================= ACCOUNT BUTTON (FIXED ONLY PART) ================= -->
-      <div class="relative">
+        <li>
+          <a href="{% url 'help_center' %}#shipping"
+             class="hover:text-white transition">
+             Shipping Policy
+          </a>
+        </li>
 
-        <button id="userBtn" class="flex items-center gap-1">
-          <i class="fa-solid fa-user text-lg"></i>
+        <li>
+          <a href="{% url 'help_center' %}#returns"
+             class="hover:text-white transition">
+             Returns & Refunds
+          </a>
+        </li>
+
+        <li>
+          <a href="{% url 'order_history' %}"
+             class="hover:text-white transition">
+             Track Orders
+          </a>
+        </li>
+
+      </ul>
+    </div>
+
+
+    <!-- NEWSLETTER -->
+    <div>
+      <h4 class="font-semibold text-lg mb-6">Newsletter</h4>
+
+      <p class="text-sm text-slate-300 mb-5 leading-6">
+        Join our mailing list for exclusive offers and new arrivals.
+      </p>
+
+      <form method="POST"
+            action="{% url 'subscribe_newsletter' %}"
+            class="space-y-3">
+
+        {% csrf_token %}
+
+        <input type="email"
+               name="email"
+               required
+               placeholder="Enter your email"
+               class="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/10 placeholder:text-slate-400 text-white outline-none focus:border-white/30">
+
+        <button type="submit"
+                class="w-full py-3 rounded-2xl bg-white text-slate-900 font-semibold hover:opacity-90 transition">
+          Subscribe
         </button>
 
-        <div id="userMenu"
-             class="hidden absolute right-0 mt-3 w-44 bg-white border rounded-xl shadow-lg overflow-hidden z-50">
+      </form>
+    </div>
 
-          {% if request.user.is_authenticated %}
+  </div>
 
-            <a href="#"
-               class="block px-4 py-2 text-sm hover:bg-gray-100">
-              Account
-            </a>
 
-            <form method="POST" action="{% url 'logout' %}">
-              {% csrf_token %}
-              <button type="submit"
-                      class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50">
-                Logout
-              </button>
-            </form>
+  <!-- BOTTOM -->
+  <div class="border-t border-white/10">
 
-          {% else %}
+    <div class="max-w-7xl mx-auto px-6 lg:px-10 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
 
-            <a href="{% url 'login' %}"
-               class="block px-4 py-2 text-sm hover:bg-gray-100">
-              Login
-            </a>
+      <p class="flex justify-center items-center text-xs text-slate-400">
+        © 2026 DMEP. All rights reserved.
+      </p>
 
-          {% endif %}
+      <div class="flex gap-6 text-xs text-slate-400">
 
-        </div>
+        <a href="#" class="hover:text-white transition">Privacy</a>
+        <a href="#" class="hover:text-white transition">Terms</a>
+        <a href="#" class="hover:text-white transition">Cookies</a>
 
       </div>
-      <!-- ================= END ACCOUNT BUTTON ================= -->
-
-    </div>
-  </nav>
-
-  <!-- MOBILE MENU -->
-  <div id="mobileMenu" class="hidden md:hidden px-6 pb-6 bg-white border-t">
-
-    <div class="flex flex-col gap-4 mt-4 text-sm">
-
-      <a href="{% url 'dashboard' %}">Home</a>
-      <a href="{% url 'products' %}">Shop</a>
-      <a href="{% url 'order_history' %}">Orders</a>
-      <a href="{% url 'help_center' %}">FAQ</a>
 
     </div>
 
   </div>
 
-</header>
-
-<!-- ================= MESSAGES ================= -->
-<main>
-    {% if messages %}
-    <div class="max-w-[1200px] mx-auto mt-4 px-4 space-y-2">
-        {% for message in messages %}
-            <div class="p-3 rounded-md border text-sm
-                {% if message.tags == 'success' %}bg-green-50 border-green-200 text-green-700{% endif %}
-                {% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-700{% endif %}
-                {% if message.tags == 'info' %}bg-blue-50 border-blue-200 text-blue-700{% endif %}
-            ">
-                {{ message }}
-            </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    {% block content %}{% endblock %}
-</main>
-
-<!-- ================= FOOTER ================= -->
-<footer class="mt-20 border-t border-black/10">
-    <div class="max-w-[1400px] mx-auto px-8 py-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-
-        <div>
-            <div class="text-xl font-extrabold tracking-tight">DMEP</div>
-            <p class="text-sm text-gray-500 mt-4">
-                Wear your style. Own your confidence.
-            </p>
-        </div>
-
-        <div>
-            <h4 class="text-xs font-bold uppercase mb-6">Shop</h4>
-            <ul class="space-y-3 text-sm text-gray-500">
-                <li><a class="hover:text-primary" href="{% url 'products' %}">All Products</a></li>
-
-                {% for category in categories %}
-                <li>
-                    <a class="hover:text-primary"
-                    href="{% url 'products' %}?category={{ category.id }}">
-                        {{ category.name }}
-                    </a>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <div>
-            <h4 class="text-xs font-bold uppercase mb-6">FAQ</h4>
-            <ul class="space-y-3 text-sm text-gray-500">
-                <li><a href="{% url 'help_center' %}#contact">Contact</a></li>
-                <li><a href="{% url 'help_center' %}#shipping">Shipping</a></li>
-                <li><a href="{% url 'help_center' %}#returns">Returns</a></li>
-            </ul>
-        </div>
-
-        <div>
-            <h4 class="text-xs font-bold uppercase mb-6">Newsletter</h4>
-
-            <form method="POST" action="{% url 'subscribe_newsletter' %}"
-                  class="flex border-b border-black/20 pb-2">
-                {% csrf_token %}
-
-                <input type="email"
-                       name="email"
-                       placeholder="Your email"
-                       required
-                       class="flex-1 bg-transparent outline-none text-sm">
-
-                <button type="submit"
-                        class="text-xs font-bold text-primary">
-                    JOIN
-                </button>
-            </form>
-        </div>
-
-    </div>
-
-    <div class="border-t py-6 text-center text-xs text-gray-400">
-        © 2026 DMEP. All rights reserved.
-    </div>
 </footer>
+<!-- ================= MOBILE NAV ================= -->
+<div class="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-line z-50 grid grid-cols-4 py-2 text-xs">
 
-<!-- ================= MOBILE BOTTOM NAV ================= -->
-<div class="fixed bottom-0 left-0 right-0 bg-white border-t md:hidden flex justify-around py-2 z-50">
+<a href="{% url 'dashboard' %}" class="flex flex-col items-center gap-1">
+<i class="fa-solid fa-house"></i>
+<span>Home</span>
+</a>
 
-  <a href="{% url 'dashboard' %}" class="flex flex-col items-center text-xs">
-    <i class="fa-solid fa-house"></i>
-    Home
-  </a>
+<a href="{% url 'products' %}" class="flex flex-col items-center gap-1">
+<i class="fa-solid fa-store"></i>
+<span>Shop</span>
+</a>
 
-  <a href="{% url 'products' %}" class="flex flex-col items-center text-xs">
-    <i class="fa-solid fa-store"></i>
-    Shop
-  </a>
+<a href="{% url 'cart' %}" class="flex flex-col items-center gap-1">
+<i class="fa-solid fa-bag-shopping"></i>
+<span>Cart</span>
+</a>
 
-  <a href="{% url 'cart' %}" class="flex flex-col items-center text-xs">
-    <i class="fa-solid fa-bag-shopping"></i>
-    Cart
-  </a>
-
-  <a href="{% url 'order_history' %}" class="flex flex-col items-center text-xs">
-    <i class="fa-solid fa-box"></i>
-    Orders
-  </a>
+<a href="{% url 'order_history' %}" class="flex flex-col items-center gap-1">
+<i class="fa-solid fa-box"></i>
+<span>Orders</span>
+</a>
 
 </div>
 
-<!-- ================= SCRIPTS ================= -->
+<!-- ================= SCRIPT ================= -->
 <script>
-
 const menuBtn = document.getElementById("menuBtn");
 const mobileMenu = document.getElementById("mobileMenu");
 
 if(menuBtn){
-  menuBtn.onclick = () => mobileMenu.classList.toggle("hidden");
+menuBtn.onclick = () => mobileMenu.classList.toggle("hidden");
 }
 
-/* ===== ACCOUNT BUTTON FIXED SCRIPT ===== */
 const userBtn = document.getElementById("userBtn");
 const userMenu = document.getElementById("userMenu");
 
-if (userBtn) {
-  userBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    userMenu.classList.toggle("hidden");
-  });
+if(userBtn){
+userBtn.addEventListener("click", function(e){
+e.stopPropagation();
+userMenu.classList.toggle("hidden");
+});
 }
 
-document.addEventListener("click", function () {
-  if (userMenu) userMenu.classList.add("hidden");
-});
-
-if (userMenu) {
-  userMenu.addEventListener("click", function (e) {
-    e.stopPropagation();
-  });
+document.addEventListener("click", function(){
+if(userMenu){
+userMenu.classList.add("hidden");
 }
-
-/* navbar shadow */
-window.addEventListener("scroll", () => {
-  document.getElementById("navbar")
-    .classList.toggle("shadow", window.scrollY > 10);
 });
 
+window.addEventListener("scroll", function(){
+document.getElementById("navbar")
+.classList.toggle("shadow-lg", window.scrollY > 10);
+});
 </script>
 
+{% block extra_css %}{% endblock %}
 {% block extra_js %}{% endblock %}
 
 </body>

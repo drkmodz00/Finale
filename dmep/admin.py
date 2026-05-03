@@ -55,7 +55,7 @@ class CustomerAdmin(admin.ModelAdmin):
 class ProductAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'name', 'sku', 'category', 'supplier',
-        'cost_price', 'selling_price', 'stock_qty', 'reorder_level', 'status', 
+        'cost_price', 'selling_price', 'stock_qty', 'reorder_level', 'status', 'created_at',
     )
     list_filter = ('status', 'category', 'supplier')
     search_fields = ('name', 'sku', 'barcode')

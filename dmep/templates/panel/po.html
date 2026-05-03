@@ -1,278 +1,397 @@
-{% extends 'panel/base.html' %}
+{% extends "panel/base.html" %}
+{% load static %}
+
 {% block content %}
 
-<div class="flex justify-between items-center mb-6">
-    <div>
-        <h1 class="text-2xl font-bold">Purchase Orders</h1>
-        <p class="text-sm text-slate-400">Supplier PO Management</p>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; }
+
+  /* ── Layout ─────────────────────────────── */
+  .pos-wrapper {
+    display: flex;
+    gap: 20px;
+    height: calc(100vh - 120px);
+    max-width: 100%;
+    padding: 10px;
+  }
+
+  /* ── Product area ───────────────────────── */
+  .product-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  /* ── Search bar ─────────────────────────── */
+  .search-wrap {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 12px 18px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s;
+  }
+  .search-wrap:focus-within {
+    box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.1);
+    border-color: #6366f1;
+  }
+  .search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1e293b;
+    background: transparent;
+  }
+
+  /* ── Product grid ───────────────────────── */
+  .product-grid {
+    flex: 1;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+    padding-bottom: 20px;
+    align-content: start;
+  }
+
+  /* ── Supplier Header ────────────────────── */
+  .supplier-header {
+    grid-column: 1 / -1;
+    background: #f1f5f9;
+    padding: 8px 15px;
+    margin-top: 15px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-left: 4px solid #6366f1;
+  }
+  .supplier-header:first-child { margin-top: 0; }
+
+  /* ── Product Card ───────────────────────── */
+  .item-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    position: relative;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+  }
+  .item-card:hover {
+    transform: translateY(-4px);
+    border-color: #6366f1;
+    box-shadow: 0 12px 20px -5px rgba(99, 102, 241, 0.15);
+  }
+  .item-card:active { transform: scale(0.97); }
+
+  .img-container {
+    position: relative;
+    width: 100%;
+    height: 110px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f1f5f9;
+  }
+  .item-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  .item-card:hover .item-img { transform: scale(1.1); }
+
+  .price-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    padding: 3px 9px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 12px;
+    z-index: 2;
+  }
+
+  .quick-add-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(99, 102, 241, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .item-card:hover .quick-add-overlay { opacity: 1; }
+  .add-btn-circle {
+    background: #6366f1;
+    color: white;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+  }
+
+  .product-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    line-height: 1.3;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 34px;
+  }
+
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px dashed #e2e8f0;
+  }
+  .sku-text { font-size: 10px; color: #94a3b8; font-weight: 500; }
+  
+  .stock-pill {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+  .stock-ok { background: #f0fdf4; color: #16a34a; }
+  .stock-low { background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; }
+
+  /* ── CART ───────────────────────────────── */
+  .cart-panel {
+    width: 360px;
+    background: #fff;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  }
+  .cart-header {
+    padding: 18px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .cart-title { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 10px; }
+  .cart-count { background: #6366f1; color: #fff; padding: 2px 10px; border-radius: 10px; font-size: 11px; }
+
+  .cart-body { flex: 1; overflow-y: auto; padding: 15px; }
+  .cart-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .cart-item-name { font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 2px; }
+  .cart-remove {
+    color: #94a3b8;
+    transition: color 0.2s;
+    font-size: 14px;
+  }
+  .cart-remove:hover { color: #ef4444; }
+
+  .cart-footer { padding: 20px; background: #f8fafc; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
+  .total-row { display: flex; justify-content: space-between; margin-bottom: 15px; }
+  .total-amount { font-size: 24px; font-weight: 800; color: #1e293b; }
+  
+  .checkout-btn {
+    width: 100%;
+    padding: 14px;
+    background: #1e293b;
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.2s;
+  }
+  .checkout-btn:hover { background: #000; transform: translateY(-1px); }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+</style>
+
+<div class="pos-wrapper">
+
+  <div class="product-area">
+    <div class="search-wrap">
+      <i class="fas fa-search text-slate-400"></i>
+      <input type="text" id="posSearch" class="search-input" placeholder="Search products (F2)">
+      <kbd class="hidden md:block bg-slate-100 px-2 py-1 rounded text-[10px] font-bold text-slate-500 border">F2</kbd>
     </div>
 
-    <button onclick="openModal()"
-        class="bg-slate-800 text-white px-4 py-2 rounded">
-        + Add PO Item
-    </button>
+    <div class="product-grid" id="productGrid">
+      
+      {% regroup products by supplier as supplier_list %}
 
-</div>
-
-<!-- FILTER -->
-
-<form method="GET" class="mb-4">
-    <select name="supplier"
-        onchange="this.form.submit()"
-        class="border p-2 rounded w-64">
-
-    <option value="">All Suppliers</option>
-
-    {% for s in suppliers %}
-    <option value="{{ s.id }}"
-        {% if selected_supplier and selected_supplier|stringformat:"s" == s.id|stringformat:"s" %}
-            selected
-        {% endif %}>
-        {{ s.name }}
-    </option>
-    {% endfor %}
-
-</select>
-
-</form>
-
-<!-- TABLE -->
-
-<div class="bg-white shadow rounded-lg overflow-visible">
-
-<table class="w-full text-sm">
-
-<thead class="bg-slate-900 text-white">
-<tr>
-    <th class="p-3 text-left">Supplier</th>
-    <th class="p-3 text-left">Order Date</th>
-    <th class="p-3 text-left">Received Date</th>
-    <th class="p-3 text-left">Total Cost</th>
-    <th class="p-3 text-left">Status</th>
-    <th class="p-3 text-left">Action</th>
-</tr>
-</thead>
-
-<tbody>
-
-{% for po in pos %}
-
-<tr class="border-b hover:bg-gray-50">
-
-<td class="p-3 font-medium">
-    {{ po.supplier.name|default:"No Supplier" }}
-</td>
-
-<td class="p-3">    
-    {{ po.order_date|date:"Y-m-d H:i" }}
-</td>
-
-<td class="p-3">
-    {% if po.received_date %}
-        {{ po.received_date|date:"Y-m-d H:i" }}
-    {% else %}
-        <span class="text-gray-400">Pending</span>
-    {% endif %}
-</td>
-
-<td class="p-3">
-    ₱{{ po.total_cost|default:0 }}
-</td>
-
-<td class="p-3">
-    {% if po.status == "pending" %}
-        <span class="text-yellow-600 font-medium">Pending</span>
-    {% elif po.status == "received" %}
-        <span class="text-green-600 font-medium">Received</span>
-    {% else %}
-        <span class="text-gray-500">{{ po.status }}</span>
-    {% endif %}
-</td>
-
-<td class="p-3 relative">
-
-    <button onclick="toggleMenu(event, 'menu-{{ po.id }}')"
-        class="text-xl font-bold px-2">
-        ⋮
-    </button>
-
-    <div id="menu-{{ po.id }}"
-        class="hidden absolute right-0 mt-2 w-44 bg-white border rounded shadow-lg z-50">
-
-        <a href="{% url 'po_items' po.id %}"
-            class="block px-4 py-2 hover:bg-gray-100">
-            View Items
-        </a>
-
-        {% if po.status != "received" %}
-        <form method="POST" action="{% url 'po_receive' po.id %}">
-            {% csrf_token %}
-            <button class="w-full text-left px-4 py-2 hover:bg-gray-100 text-green-600">
-                Receive Stock
-            </button>
-        </form>
-        {% endif %}
-
-        <!-- DELETE (NOW WINDOW.LOCATION STYLE) -->
-        <button type="button"
-            onclick="deletePO('{{ po.id }}')"
-            class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">
-            Delete
-        </button>
-
-    </div>
-
-</td>
-
-</tr>
-
-{% empty %}
-
-<tr>
-    <td colspan="6" class="p-6 text-center text-gray-400">
-        No Purchase Orders Found
-    </td>
-</tr>
-{% endfor %}
-
-</tbody>
-</table>
-
-</div>
-
-<!-- MODAL -->
-
-<div id="modal"
-     class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-
-<div class="bg-white w-[420px] p-6 rounded shadow">
-
-    <h2 class="text-lg font-bold mb-4">Add PO Item</h2>
-
-    <form method="POST" action="{% url 'po_create' %}">
-        {% csrf_token %}
-
-        <select name="supplier" id="supplierSelect"
-            class="border w-full p-2 mb-3">
-            <option value="">Select Supplier</option>
-            {% for s in suppliers %}
-            <option value="{{ s.id }}">{{ s.name }}</option>
-            {% endfor %}
-        </select>
-
-        <select name="product" id="productSelect"
-            class="border w-full p-2 mb-3">
-            <option value="">Select Product</option>
-            {% for p in products %}
-            <option value="{{ p.id }}">{{ p.name }}</option>
-            {% endfor %}
-        </select>
-
-        <input name="qty_ordered"
-            placeholder="Quantity"
-            class="border w-full p-2 mb-3">
-
-        <input name="unit_cost"
-            placeholder="Unit Cost"
-            class="border w-full p-2 mb-3">
-
-        <div class="flex justify-end gap-2">
-
-            <button type="button"
-                onclick="closeModal()"
-                class="px-3 py-1 border">
-                Cancel
-            </button>
-
-            <button type="submit"
-                class="bg-blue-600 text-white px-4 py-1 rounded">
-                Save
-            </button>
-
+      {% for supplier_group in supplier_list %}
+        
+        <div class="supplier-header" data-supplier-id="{{ supplier_group.grouper.id }}">
+          <i class="fas fa-truck-field"></i> {{ supplier_group.grouper.name|default:"General / No Supplier" }}
         </div>
 
-    </form>
+        {% for product in supplier_group.list %}
+          {% if product.status == "active" %}
+          <a href="{% url 'purchase_add' product.id %}" 
+             class="item-card {% if product.stock_qty <= 5 %}low-stock{% endif %}"
+             data-name="{{ product.name|lower }}"
+             data-supplier-ref="{{ supplier_group.grouper.id }}">
+            
+            <div class="img-container">
+              <div class="price-badge">₱{{ product.selling_price }}</div>
+              
+              {% if product.img %}
+                <img src="{{ product.img.url }}" class="item-img" alt="{{ product.name }}">
+              {% else %}
+                <div class="flex items-center justify-center h-full text-slate-300">
+                  <i class="fas fa-image fa-2x"></i>
+                </div>
+              {% endif %}
 
+              <div class="quick-add-overlay">
+                  <div class="add-btn-circle"><i class="fas fa-plus"></i></div>
+              </div>
+            </div>
+
+            <div class="product-name">{{ product.name|default:"Unnamed Product" }}</div>
+
+            <div class="meta-row">
+              <span class="sku-text">{{ product.sku|default:"NO-SKU" }}</span>
+              <span class="stock-pill {% if product.stock_qty <= 5 %}stock-low{% else %}stock-ok{% endif %}">
+                {{ product.stock_qty }} in stock
+              </span>
+            </div>
+          </a>
+          {% endif %}
+        {% endfor %}
+      {% endfor %}
+
+      <div class="no-results text-center py-20 w-full" id="noResults" style="display:none;">
+        <i class="fas fa-search fa-3x text-slate-200 mb-4"></i>
+        <p class="text-slate-500 font-medium">No products match your search</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="cart-panel">
+    <div class="cart-header">
+      <div class="cart-title"><i class="fas fa-shopping-cart text-indigo-500"></i> Current Order</div>
+      <span class="cart-count">{{ cart|length }}</span>
+    </div>
+
+    <div class="cart-body">
+      {% for id, item in cart.items %}
+      <div class="cart-item">
+        <div class="flex-1">
+          <div class="flex justify-between items-start">
+            <p class="cart-item-name">{{ item.name }}</p>
+            <a href="{% url 'purchase_remove' id %}" class="cart-remove"><i class="fas fa-trash-alt"></i></a>
+          </div>
+          <div class="flex justify-between items-center mt-1">
+            <span class="text-[11px] text-slate-500 font-medium">₱{{ item.price }} × {{ item.qty }}</span>
+            <span class="text-xs font-bold text-slate-700">₱{{ item.price }}</span>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="cart-empty text-center py-20">
+        <i class="fas fa-bag-shopping fa-3x text-slate-100 mb-4"></i>
+        <p class="text-slate-400 text-sm font-medium">Your cart is empty</p>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="cart-footer">
+      <div class="total-row">
+        <span class="text-slate-500 font-bold text-xs uppercase tracking-wider">Grand Total</span>
+        <span class="total-amount">₱{{ total }}</span>
+      </div>
+      <form method="POST" action="{% url 'purchase_checkout_page' %}">
+        {% csrf_token %}
+        <button type="submit" class="checkout-btn">
+          <i class="fas fa-check-circle"></i>
+          Complete Transaction
+        </button>
+      </form>
+    </div>
+  </div>
 </div>
-
-</div>
-
-<!-- JS -->
 
 <script>
+const searchInput = document.getElementById('posSearch');
+const noResults = document.getElementById('noResults');
 
-function openModal() {
-    document.getElementById("modal").classList.remove("hidden");
-}
+searchInput.addEventListener('input', function () {
+  const q = this.value.toLowerCase().trim();
+  const cards = document.querySelectorAll('.item-card');
+  const headers = document.querySelectorAll('.supplier-header');
+  
+  let visibleCount = 0;
+  const activeSuppliers = new Set();
 
-function closeModal() {
-    document.getElementById("modal").classList.add("hidden");
-}
-
-/* MENU */
-function toggleMenu(event, id) {
-    event.stopPropagation();
-
-    document.querySelectorAll('[id^="menu-"]').forEach(el => {
-        if (el.id !== id) el.classList.add("hidden");
-    });
-
-    document.getElementById(id).classList.toggle("hidden");
-}
-
-/* CLOSE OUTSIDE */
-document.addEventListener("click", function () {
-    document.querySelectorAll('[id^="menu-"]').forEach(el => {
-        el.classList.add("hidden");
-    });
-});
-
-/* MODAL CLOSE */
-document.addEventListener("click", function (e) {
-    if (e.target.id === "modal") closeModal();
-});
-
-/* DELETE PO (WINDOW.LOCATION STYLE) */
-function deletePO(id) {
-    if (!confirm("Delete this Purchase Order?")) return;
-
-    window.location.href = `/admin-panel/purchase-orders/${id}/delete/`;
-}
-
-/* AJAX PRODUCT LOAD (UNCHANGED) */
-document.addEventListener("change", function (e) {
-
-    if (e.target && e.target.id === "supplierSelect") {
-
-        const supplierId = e.target.value;
-        const productSelect = document.getElementById("productSelect");
-
-        productSelect.innerHTML = "";
-
-        if (!supplierId) {
-            productSelect.innerHTML = "<option>Select supplier first</option>";
-            return;
-        }
-
-        fetch(`/ajax/supplier-products/?supplier_id=${supplierId}`)
-            .then(res => res.json())
-            .then(data => {
-
-                productSelect.innerHTML = "<option>Select Product</option>";
-
-                data.forEach(p => {
-                    const option = document.createElement("option");
-                    option.value = p.id;
-                    option.textContent = p.name;
-                    productSelect.appendChild(option);
-                });
-
-            });
-
+  // 1. Filter Cards
+  cards.forEach(card => {
+    const match = card.dataset.name.includes(q);
+    card.style.display = match ? 'flex' : 'none';
+    if (match) {
+      visibleCount++;
+      activeSuppliers.add(card.dataset.supplierRef);
     }
+  });
 
+  // 2. Hide headers that have no visible products
+  headers.forEach(header => {
+    const id = header.dataset.supplierId;
+    header.style.display = activeSuppliers.has(id) ? 'flex' : 'none';
+  });
+
+  noResults.style.display = visibleCount === 0 ? 'block' : 'none';
 });
 
+// Shortcut F2 to focus search
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'F2') {
+    e.preventDefault();
+    searchInput.focus();
+    searchInput.select();
+  }
+});
 </script>
 
 {% endblock %}

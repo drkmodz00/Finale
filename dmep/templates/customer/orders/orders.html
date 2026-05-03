@@ -5,129 +5,171 @@
 
 {% block content %}
 
-<div class="max-w-3xl mx-auto px-4 py-6">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- HEADER -->
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">Order History</h1>
+<style>
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #f5f3ef;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-up { animation: fadeUp 0.45s ease both; }
+
+  .item-img {
+    transition: transform 0.3s ease;
+  }
+  .item-img:hover { transform: scale(1.06); }
+
+  @keyframes pulse-dot {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(234,179,8,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(234,179,8,0); }
+  }
+
+  .dot-processing { animation: pulse-dot 1.8s infinite; }
+</style>
+
+<!-- PAGE WRAPPER (FULL WIDTH) -->
+<div class="w-full px-8 py-10">
+
+  <!-- HEADER -->
+  <div class="fade-up mb-10">
+    <p class="text-[11px] tracking-[0.25em] uppercase text-stone-400 font-medium mb-2">
+      DMEP Collection
+    </p>
+
+    <h1 class="text-3xl font-semibold text-stone-900 tracking-tight">
+      Order History
+    </h1>
+
+    <p class="text-sm text-stone-500 mt-1">
+      Track and manage all your past purchases.
+    </p>
+  </div>
+
+  <!-- EMPTY STATE -->
+  {% if not orders %}
+  <div class="fade-up flex flex-col items-center justify-center py-28 text-stone-400 gap-4">
+    <div class="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center">
+      <i class="fas fa-box-open text-2xl text-stone-300"></i>
     </div>
+    <p class="text-sm font-medium">No orders yet.</p>
+    <a href="{% url 'products' %}"
+       class="px-5 py-2.5 bg-stone-900 text-white text-xs font-semibold rounded-xl hover:bg-stone-700 transition">
+      Start Shopping
+    </a>
+  </div>
+  {% endif %}
 
-    {% for order in orders %}
-    <div class="relative mb-8">
+  <!-- ORDERS -->
+  {% for order in orders %}
+  <div class="w-full mb-6 fade-up">
 
-        <!-- vertical line -->
-        <div class="absolute left-3 top-8 bottom-0 w-px bg-gray-200"></div>
+    <div class="flex gap-5 items-start">
 
-        <!-- date -->
-        <div class="ml-10 mb-2 text-xs tracking-widest text-gray-400 uppercase">
-            {{ order.created_at|date:"F d, Y" }}
+      <!-- STATUS DOT -->
+      <div class="mt-1">
+        <div class="w-[14px] h-[14px] rounded-full border-2 border-white shadow
+          {% if order.status == 'delivered' %} bg-emerald-500
+          {% elif order.status == 'shipped' %} bg-blue-500
+          {% elif order.status == 'processing' %} bg-yellow-400 dot-processing
+          {% elif order.status == 'cancelled' %} bg-red-400
+          {% else %} bg-stone-400
+          {% endif %}">
+        </div>
+      </div>
+
+      <!-- CARD -->
+      <div class="w-full bg-white border border-stone-100 shadow-sm">
+
+        <!-- HEADER -->
+        <div class="flex justify-between items-center px-5 py-4 border-b border-stone-100">
+
+          <div class="flex items-center gap-3">
+            <span class="font-semibold text-stone-900">
+              #ORD-{{ order.order_code }}
+            </span>
+
+            <span class="text-[10px] font-semibold px-2.5 py-1 rounded-full
+              {% if order.status == 'delivered' %} bg-emerald-50 text-emerald-600
+              {% elif order.status == 'shipped' %} bg-blue-50 text-blue-600
+              {% elif order.status == 'processing' %} bg-yellow-50 text-yellow-600
+              {% elif order.status == 'cancelled' %} bg-red-50 text-red-500
+              {% else %} bg-stone-100 text-stone-500
+              {% endif %}">
+              {{ order.status|capfirst }}
+            </span>
+          </div>
+
+          <span class="font-semibold text-stone-900">
+            ₱{{ order.total_amount|floatformat:2 }}
+          </span>
+
         </div>
 
-        <div class="flex gap-4">
+        <!-- ITEMS -->
+        <div class="px-5 py-4 divide-y divide-stone-100">
 
-            <!-- DOT -->
-            <div class="mt-3 z-10">
-                <div class="w-3 h-3 rounded-full
-                    {% if order.status == 'delivered' %} bg-green-500
-                    {% elif order.status == 'shipped' %} bg-blue-500
-                    {% elif order.status == 'processing' %} bg-yellow-500
-                    {% else %} bg-gray-400
-                    {% endif %}
-                "></div>
+          {% for item in order.sale_items.all %}
+          <div class="flex items-center gap-4 py-3">
+
+            <div class="w-12 h-12 rounded-lg overflow-hidden bg-stone-100">
+              <img src="{{ item.product.img.url }}"
+                   class="w-full h-full object-cover item-img"
+                   alt="{{ item.product.name }}">
             </div>
 
-            <!-- CARD -->
-            <div class="flex-1 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition">
-
-                <!-- HEADER -->
-                <div class="flex justify-between items-center px-4 py-3 border-b">
-
-                    <div class="font-semibold text-gray-900">
-                        #ORD-{{ order.order_code }}
-                    </div>
-
-                    <div class="flex items-center gap-3">
-
-                        <span class="text-xs px-2 py-1 rounded-full font-medium
-                            {% if order.status == 'delivered' %} bg-green-100 text-green-700
-                            {% elif order.status == 'shipped' %} bg-blue-100 text-blue-700
-                            {% elif order.status == 'processing' %} bg-yellow-100 text-yellow-700
-                            {% else %} bg-gray-100 text-gray-600
-                            {% endif %}
-                        ">
-                            {{ order.status|capfirst }}
-                        </span>
-
-                        <span class="font-semibold text-gray-900 text-sm">
-                            ₱{{ order.total_amount|floatformat:2 }}
-                        </span>
-
-                    </div>
-
-                </div>
-
-                <!-- ITEMS -->
-                <div class="px-4 py-3 space-y-3">
-
-                    {% for item in order.sale_items.all %}
-                    <div class="flex items-center gap-3">
-
-                        <!-- PRODUCT IMAGE -->
-                        <img src="{{ item.product.img.url }}"
-                             class="w-11 h-11 rounded-lg object-cover bg-gray-100 border">
-
-                        <!-- INFO -->
-                        <div class="flex-1">
-                            <div class="text-sm font-medium text-gray-900">
-                                {{ item.product.name }}
-                            </div>
-
-                            <div class="text-xs text-gray-500">
-                                Qty {{ item.quantity }} • ₱{{ item.unit_price|floatformat:2 }}
-                            </div>
-                        </div>
-
-                        <!-- LINE TOTAL -->
-                        <div class="text-sm font-semibold text-gray-900">
-                            ₱{{ item.line_total|floatformat:2 }}
-                        </div>
-
-                    </div>
-                    {% endfor %}
-
-                </div>
-
-                <!-- FOOTER -->
-                <div class="flex justify-between items-center px-4 py-3 border-t">
-
-                    <div class="text-xs text-gray-500">
-                        {{ order.status|capfirst }} • {{ order.created_at|date:"M d" }}
-                    </div>
-
-                    <div class="flex gap-2">
-
-                        <a href="{% url 'buy_again' order.order_code %}"
-                           class="px-3 py-1 text-xs rounded-md bg-gray-900 text-white hover:bg-gray-800 transition">
-                            Buy Again
-                        </a>
-
-                        <a href="{% url 'track_order' order.order_code %}"
-                           class="px-3 py-1 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 transition">
-                            Track
-                        </a>
-
-
-                    </div>
-
-                </div>
-
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-stone-800 truncate">
+                {{ item.product.name }}
+              </p>
+              <p class="text-xs text-stone-400">
+                Qty {{ item.quantity }} · ₱{{ item.unit_price|floatformat:2 }}
+              </p>
             </div>
+
+            <div class="text-sm font-semibold text-stone-900">
+              ₱{{ item.line_total|floatformat:2 }}
+            </div>
+
+          </div>
+          {% endfor %}
+
         </div>
+
+        <!-- FOOTER -->
+        <div class="flex justify-between items-center px-5 py-3 bg-stone-50 border-t border-stone-100">
+
+          <p class="text-xs text-stone-400">
+            Placed {{ order.created_at|date:"M d, Y" }}
+          </p>
+
+          <div class="flex gap-2">
+            <a href="{% url 'buy_again' order.order_code %}"
+               class="px-4 py-2 bg-stone-900 text-white text-xs font-semibold hover:bg-stone-700 transition">
+              Buy Again
+            </a>
+
+            <a href="{% url 'track_order' order.order_code %}"
+               class="px-4 py-2 border border-stone-200 text-stone-700 text-xs font-semibold hover:bg-stone-100 transition">
+              Track
+            </a>
+          </div>
+
+        </div>
+
+      </div>
     </div>
-    {% endfor %}
+  </div>
+  {% endfor %}
 
 </div>
-
 
 {% block extra_js %}
 <script src="{% static 'js/customer/orders.js' %}"></script>

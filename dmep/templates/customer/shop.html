@@ -3,83 +3,444 @@
 
 {% block content %}
 
-<main class="max-w-screen-2xl mx-auto px-8 py-12">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-  <!-- HEADER -->
-  <header class="mb-12">
-    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<style>
+  /* ── Base ───────────────────────────────
+  *, *::before, *::after { box-sizing: border-box; }
+  body { font-family: 'Outfit', sans-serif;}
+  .font-display { font-family: 'Playfair Display', serif; } */
 
-      <div>
-        <h1 class="text-5xl font-extrabold mb-2">Shop All</h1>
-        <p class="text-gray-600">Browse our products</p>
+  /* ── Page-load stagger ────────────────── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { animation: fadeUp 0.55s cubic-bezier(0.22,1,0.36,1) both; }
+  .delay-1 { animation-delay: 0.08s; }
+  .delay-2 { animation-delay: 0.16s; }
+  .delay-3 { animation-delay: 0.24s; }
+
+  /* ── Product card ─────────────────────── */
+  .prod-card { transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s ease; }
+  .prod-card:hover { transform: translateY(-5px); box-shadow: 0 20px 48px rgba(0,0,0,0.12); }
+  .prod-img { transition: transform 0.6s cubic-bezier(0.22,1,0.36,1); }
+  .prod-card:hover .prod-img { transform: scale(1.07); }
+
+  /* ── PRODUCT GRID SIZE CONTROL (UPDATED) ───────── */
+
+  /* makes grid more compact (prevents “too wide” feel) */
+  .product-grid {
+    gap: 5px !important;
+  }
+
+  /* product card size control */
+  .prod-card {
+    max-width: 100%;   /* controls width */
+    margin: 0 auto;
+  }
+
+  /* image container - keeps full image visible */
+  .prod-card .aspect-\[4\/5\] {
+    aspect-ratio: 1 / 1.2;   /* slightly shorter than before */
+  }
+
+  /* image itself - ensure full visibility (NO cropping) */
+  .prod-img {
+    object-fit: cover !important;   /* important change */
+    padding: 8px;
+  }
+
+  /* reduce text size slightly to match smaller cards */
+  .prod-card .text-xs {
+    font-size: 13px;
+  }
+
+  .prod-card .text-sm {
+    font-size: 16px;
+  }
+
+  /* make grid tighter on large screens */
+  @media (min-width: 1280px) {
+    .product-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .product-grid {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+  }
+  /* ── Quick-add ripple ─────────────────── */
+  .qadd-btn { transition: background 0.2s, color 0.2s, transform 0.15s; }
+  .qadd-btn:hover { transform: scale(1.12); }
+  .qadd-btn:active { transform: scale(0.96); }
+
+  /* ── Fly-to-cart image ────────────────── */
+  .fly-ghost {
+    position: fixed;
+    border-radius: 12px;
+    object-fit: cover;
+    z-index: 9999;
+    pointer-events: none;
+    will-change: transform, opacity, width, height;
+    transition:
+      left   0.72s cubic-bezier(0.4, 0, 0.2, 1),
+      top    0.72s cubic-bezier(0.4, 0, 0.2, 1),
+      width  0.72s cubic-bezier(0.4, 0, 0.2, 1),
+      height 0.72s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.6s ease 0.1s,
+      border-radius 0.5s ease;
+  }
+
+  /* ── Cart badge pop ───────────────────── */
+  @keyframes badgePop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.6); }
+    70%  { transform: scale(0.85); }
+    100% { transform: scale(1); }
+  }
+  .badge-pop { animation: badgePop 0.4s cubic-bezier(0.36,0.07,0.19,0.97); }
+
+  /* ── Modal base ───────────────────────── */
+  /* BACKDROP */
+  #productModal{
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    display:flex;
+    transition:0.25s ease;
+  }
+
+  #productModal.modal-visible{
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+  }
+
+  /* POP ANIMATION */
+  .modal-inner{
+    transform:scale(.94) translateY(18px);
+    opacity:0;
+    transition:all .28s cubic-bezier(.22,1,.36,1);
+  }
+
+  #productModal.modal-visible .modal-inner{
+    transform:scale(1) translateY(0);
+    opacity:1;
+  }
+
+  /* MOBILE */
+  @media(max-width:768px){
+
+    .modal-inner{
+      max-width:95%;
+      border-radius:26px;
+    }
+
+    .modal-inner .grid{
+      grid-template-columns:1fr;
+    }
+
+    #modalProductName{
+      font-size:42px !important;
+    }
+
+    #modalPriceWrapper{
+      font-size:38px !important;
+    }
+
+    #modalAddToCart{
+      height:68px;
+      font-size:22px;
+    }
+  }  /* ── Sidebar cat toggle ───────────────── */
+  .cat-children {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+  .cat-children.open { max-height: 500px; }
+  .cat-arrow { transition: transform 0.25s ease; }
+  .cat-arrow.rotated { transform: rotate(90deg); }
+
+  /* ── Active category link ─────────────── */
+  .cat-active { color: #1a1714 !important; font-weight: 600; }
+
+  /* ── Toast ────────────────────────────── */
+  @keyframes toastIn {
+    from { transform: translateY(100px); opacity: 0; }
+    to   { transform: translateY(0);     opacity: 1; }
+  }
+  @keyframes toastOut {
+    from { transform: translateY(0);     opacity: 1; }
+    to   { transform: translateY(100px); opacity: 0; }
+  }
+  .toast-in  { animation: toastIn  0.35s cubic-bezier(0.22,1,0.36,1) both; }
+  .toast-out { animation: toastOut 0.3s ease both; }
+
+  /* ── Scrollbar thin ───────────────────── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #d6cfc5; border-radius: 4px; }
+
+    /* ADD THIS BELOW YOUR CSS */
+
+  /* YOUR global .grid rule broke the modal */
+  /* use dedicated modal layout */
+
+  .modal-grid{
+    display:grid;
+    grid-template-columns: 480px 1fr;   /* smaller left image side */
+    min-height: 560px;                  /* shorter modal */
+  }
+  .modal-stats{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+  }
+
+  @media(max-width:768px){
+
+    .modal-grid{
+      grid-template-columns:1fr;
+    }
+
+  /* modal outer box */
+  .modal-inner{
+    width: 88% !important;      /* smaller than before */
+    max-width: 1180px !important;
+    max-height: 88vh;
+    overflow: hidden;
+  }
+
+    #modalProductName{
+      font-size:20px !important;
+    }
+
+    #modalPriceWrapper{
+      font-size:20px !important;
+    }
+
+    .modal-stats{
+      grid-template-columns:1fr;
+    }
+
+    #modalAddToCart{
+      height:68px;
+      font-size:22px;
+    }
+  }
+</style>
+
+
+<!-- ═══════════════════════════════════════════
+     PAGE WRAPPER
+═══════════════════════════════════════════ -->
+<div class="max-w-screen-2xl mx-auto px-4 sm:px-6">
+
+<!-- ─── HERO SLIDER HEADER ─── -->
+<!-- ─── HERO HEADER SLIDER ─── -->
+<header class="fade-up pt-10 pb-10 border-b border-stone-200">
+
+  <div class="relative overflow-hidden rounded-3xl shadow-sm bg-white">
+
+    <!-- SLIDER WRAPPER -->
+    <div id="heroSlider" class="relative h-[320px] md:h-[440px]">
+
+      <!-- WOMEN -->
+      <div class="hero-slide absolute inset-0 opacity-100 transition-opacity duration-700">
+        <img 
+          src="https://i.pinimg.com/1200x/a7/01/92/a701928653057bcc677810d6f73d9071.jpg"
+          class="w-full h-full object-cover"
+        />
+
+        <div class="absolute inset-0 bg-black/40"></div>
+
+        <!-- LEFT BOTTOM CONTENT -->
+        <div class="absolute bottom-8 left-8 md:left-14 text-white max-w-md">
+          <p class="text-[10px] tracking-[0.35em] uppercase opacity-80 mb-2">Women</p>
+          <h2 class="text-3xl md:text-5xl font-semibold mb-2">Elegant Essentials</h2>
+          <p class="text-sm opacity-80">
+            Discover curated women's apparel designed for comfort and timeless style.
+          </p>
+        </div>
       </div>
 
-      <form method="GET" class="flex items-center gap-2">
-        <input type="text" name="q" value="{{ q }}"
-               placeholder="Search products..."
-               class="bg-gray-100 border-b border-gray-300 px-4 py-2 text-sm focus:outline-none focus:border-blue-500">
+      <!-- MEN -->
+      <div class="hero-slide absolute inset-0 opacity-0 transition-opacity duration-700">
+        <img 
+          src="https://i.pinimg.com/1200x/c5/c7/64/c5c764760904f5f6ca4f92d8a07520bc.jpg"
+          class="w-full h-full object-cover"
+        />
 
-        <button class="text-blue-600 font-semibold hover:text-blue-800">
-          Search
-        </button>
-      </form>
+        <div class="absolute inset-0 bg-black/40"></div>
+
+        <!-- LEFT BOTTOM CONTENT -->
+        <div class="absolute bottom-8 left-8 md:left-14 text-white max-w-md">
+          <p class="text-[10px] tracking-[0.35em] uppercase opacity-80 mb-2">Men</p>
+          <h2 class="text-3xl md:text-5xl font-semibold mb-2">Modern Streetwear</h2>
+          <p class="text-sm opacity-80">
+            Clean, versatile essentials built for everyday confidence and style.
+          </p>
+        </div>
+      </div>
+
+      <!-- ACCESSORIES -->
+      <div class="hero-slide absolute inset-0 opacity-0 transition-opacity duration-700">
+        <img 
+          src="https://i.pinimg.com/1200x/5a/b6/8c/5ab68c1be892998bc88e543156373fab.jpg"
+          class="w-full h-full object-cover"
+        />
+
+        <div class="absolute inset-0 bg-black/40"></div>
+
+        <!-- LEFT BOTTOM CONTENT -->
+        <div class="absolute bottom-8 left-8 md:left-14 text-white max-w-md">
+          <p class="text-[10px] tracking-[0.35em] uppercase opacity-80 mb-2">Accessories</p>
+          <h2 class="text-3xl md:text-5xl font-semibold mb-2">Finishing Touches</h2>
+          <p class="text-sm opacity-80">
+            Elevate your look with carefully selected accessories and details.
+          </p>
+        </div>
+      </div>
 
     </div>
-  </header>
 
-  <div class="flex flex-col lg:flex-row gap-10">
+    <!-- DOTS -->
+    <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+      <span class="dot w-2 h-2 rounded-full bg-white"></span>
+      <span class="dot w-2 h-2 rounded-full bg-white/40"></span>
+      <span class="dot w-2 h-2 rounded-full bg-white/40"></span>
+    </div>
 
-    <!-- SIDEBAR -->
-    <aside class="w-full lg:w-64">
-      <div class="flex flex-col gap-3">
+  </div>
 
-        <h2 class="font-bold mb-2 text-gray-900">Categories</h2>
+</header>
 
-        <a href="?q={{ q }}" class="text-sm font-semibold text-gray-700 hover:text-blue-500">
-          All
-        </a>
 
-        {% for cat in categories %}
-        <div>
 
-          <button type="button"
-                  class="w-full text-left text-sm font-semibold text-gray-800 hover:text-blue-600 py-1"
-                  onclick="toggleCat('{{ cat.id }}')">
-            {{ cat.name }}
-          </button>
+<!-- ─── BODY GRID ─── -->
+  <div class="flex gap-6 pt-8 pb-16">
 
-          <div id="cat-{{ cat.id }}"
-               class="hidden flex flex-col gap-1 ml-4 pl-3 border-l border-gray-200 mt-1">
+    <!-- ─── SIDEBAR ─── -->
 
-            {% for sub in cat.subcategories.all %}
-            <a href="?q={{ q }}&category={{ sub.id }}"
-               class="text-xs text-gray-500 hover:text-blue-600 py-1 subcat-link"
-               data-parent="{{ cat.id }}">
-              {{ sub.name }}
-            </a>
-            {% endfor %}
+    <aside class="hidden lg:block w-[270px] shrink-0 fade-up delay-1">
 
+      <div class="sticky top-6">
+
+        <div class="bg-white rounded-3xl border border-stone-200 shadow-sm overflow-hidden">
+
+          <!-- HEADER -->
+          <div class="px-6 pt-6 pb-4 border-b border-stone-100">
+            <p class="text-[11px] tracking-[0.34em] uppercase text-stone-400 font-semibold mb-2">
+              Browse Store
+            </p>
+
+            <h3 class="text-xl font-semibold text-stone-900 leading-tight">
+              Categories
+            </h3>
           </div>
 
-        </div>
-        {% endfor %}
+          <!-- BODY -->
+          <div class="p-4">
 
+            <!-- ALL PRODUCTS -->
+            <a href="?q={{ q }}"
+              class="group flex items-center justify-between px-4 py-3 rounded-2xl text-[15px] font-medium transition-all mb-2
+              {% if not selected_category %}
+                bg-stone-900 text-white shadow-sm
+              {% else %}
+                text-stone-700 hover:bg-stone-50
+              {% endif %}">
+
+              <span class="flex items-center gap-3">
+                <i class="fas fa-th-large text-[12px]"></i>
+                All Products
+              </span>
+
+              <i class="fas fa-arrow-right text-[11px] opacity-60"></i>
+            </a>
+
+            <!-- CATEGORIES -->
+            <div class="space-y-2 mt-3">
+
+              {% for cat in categories %}
+              <div class="rounded-2xl border border-stone-100 overflow-hidden">
+
+                <!-- MAIN CAT -->
+                <button type="button"
+                  onclick="toggleCat('{{ cat.id }}')"
+                  class="w-full flex items-center justify-between px-4 py-3 text-left text-[15px] font-medium text-stone-800 hover:bg-stone-50 transition">
+
+                  <span>{{ cat.name }}</span>
+
+                  <i id="arrow-{{ cat.id }}"
+                    class="fas fa-chevron-right text-[11px] text-stone-400 cat-arrow transition-transform"></i>
+                </button>
+
+                <!-- SUBCAT -->
+                <div id="cat-{{ cat.id }}" class="cat-children bg-stone-50">
+
+                  <div class="px-3 pb-3 space-y-1">
+
+                    {% for sub in cat.subcategories.all %}
+                    <a href="?q={{ q }}&category={{ sub.id }}"
+                      class="subcategory-link flex items-center justify-between px-3 py-2.5 rounded-xl text-[14px] transition-all duration-200
+
+                      {% if selected_category == sub.id|stringformat:'s' %}
+                          bg-white text-stone-900 font-semibold shadow-sm border border-stone-100
+                      {% else %}
+                          text-stone-500 hover:bg-white hover:text-stone-900
+                      {% endif %}">
+
+                      <span class="truncate">{{ sub.name }}</span>
+
+                      {% if selected_category == sub.id|stringformat:'s' %}
+                          <i class="fas fa-check text-[10px] text-stone-900"></i>
+                      {% else %}
+                          <i class="fas fa-angle-right text-[10px] opacity-40"></i>
+                      {% endif %}
+
+                    </a>
+                    {% endfor %}
+                  </div>
+
+                </div>
+
+              </div>
+              {% endfor %}
+
+            </div>
+
+          </div>
+        </div>
       </div>
     </aside>
 
-    <!-- PRODUCTS -->
-    <section class="flex-1">
+    <!-- ─── PRODUCTS ─── -->
+    <section class="flex-1 min-w-0 fade-up delay-2">
 
-      <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <!-- Results bar -->
+      <div class="flex items-center justify-between mb-5">
+        <p class="text-xs text-stone-400 font-medium">
+          {% if q %}Results for "<span class="text-stone-700">{{ q }}</span>"{% else %}All products{% endif %}
+        </p>
+        <p class="text-xs text-stone-400">{{ products.paginator.count }} item{{ products.paginator.count|pluralize }}</p>
+      </div>
+
+      <!-- Grid -->
+      <div class="product-grid grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
 
         {% for product in products %}
 
-        <div class="group bg-white rounded-xl shadow-sm hover:shadow-lg transition duration-300 overflow-hidden border border-gray-100 relative"
+        <div class="prod-card bg-white rounded-2xl overflow-hidden border border-stone-100 shadow-sm cursor-pointer relative group"
              onclick="showProduct(this)"
-
              data-name="{{ product.name }}"
              data-url="{% url 'cart_add' product.id %}"
-             data-img="{% if product.img and product.img.name %}{{ product.img.url }}{% endif %}"
+             data-img="{% if product.img and product.img.name %}{{ product.img.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}"
              data-final-price="{{ product.final_price }}"
              data-selling-price="{{ product.selling_price }}"
              data-discount="{{ product.discount_percent }}"
@@ -89,82 +450,81 @@
              data-supplier="{{ product.supplier.name }}"
              data-stock="{{ product.stock_qty }}">
 
-          <div class="aspect-square bg-gray-50 flex items-center justify-center relative">
+          <!-- Image -->
+          <div class="aspect-[4/5] bg-stone-100 overflow-hidden relative">
 
             {% if product.discount_percent > 0 %}
-              <span class="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10">
-                -{{ product.discount_percent|floatformat:2 }}%
-              </span>
+            <span class="absolute top-2.5 left-2.5 z-10 bg-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wide shadow">
+              -{{ product.discount_percent|floatformat:0 }}%
+            </span>
             {% endif %}
 
-            <img src="{% if product.img %}{{ product.img.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}"
-                 class="w-full h-full object-cover cursor-pointer hover:scale-105 transition duration-300"
-                 alt="{{ product.name }}">
+            <img src="{% if product.img and product.img.name %}{{ product.img.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}"
+                 alt="{{ product.name }}"
+                 class="prod-img w-full h-full object-cover">
+
+            <!-- Quick-add -->
+            <button type="button"
+                    class="qadd-btn add-to-cart-btn absolute bottom-3 right-3 w-9 h-9 rounded-xl bg-white/90 backdrop-blur-sm border border-stone-100 shadow-md flex items-center justify-center text-stone-700 hover:bg-stone-900 hover:text-white hover:border-stone-900 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                    data-url="{% url 'cart_add' product.id %}"
+                    onclick="event.stopPropagation();"
+                    title="Add to cart">
+              <i class="fas fa-shopping-bag text-[11px]"></i>
+            </button>
+
           </div>
 
-          <button type="button"
-                  class="add-to-cart-btn absolute bottom-3 right-3 bg-white text-gray-800 shadow-md rounded-full w-10 h-10 flex items-center justify-center hover:bg-blue-600 hover:text-white transition"
-                  data-url="{% url 'cart_add' product.id %}"
-                  onclick="event.stopPropagation();">
-            <i class="fas fa-shopping-cart"></i>
-          </button>
-
-          <div class="p-4 flex flex-col gap-1">
-
-            <h3 class="text-sm font-semibold text-gray-800 line-clamp-2">
-              {{ product.name }}
-            </h3>
-
-            <div class="mt-1 text-sm">
-
+          <!-- Info -->
+          <div class="p-3.5">
+            <p class="text-xs font-medium text-stone-800 leading-snug line-clamp-2 min-h-[34px] mb-2">{{ product.name }}</p>
+            <div class="flex items-center gap-1.5 flex-wrap">
               {% if product.discount_percent > 0 %}
-                <span class="text-red-600 font-bold">₱{{ product.final_price|floatformat:2 }}</span>
-                <span class="line-through text-gray-400 ml-2">₱{{ product.selling_price|floatformat:2 }}</span>
+              <span class="font-bold text-sm text-red-500">₱{{ product.final_price|floatformat:2 }}</span>
+              <span class="text-[11px] text-stone-400 line-through">₱{{ product.selling_price|floatformat:2 }}</span>
               {% else %}
-                <span class="font-semibold text-gray-800">₱{{ product.selling_price|floatformat:2 }}</span>
+              <span class="font-bold text-sm text-stone-900">₱{{ product.selling_price|floatformat:2 }}</span>
               {% endif %}
-
             </div>
-
           </div>
 
         </div>
 
         {% empty %}
-          <p class="col-span-full text-gray-500">No products found</p>
+        <div class="col-span-full flex flex-col items-center justify-center py-24 text-stone-400 gap-3">
+          <i class="fas fa-box-open text-4xl opacity-30"></i>
+          <p class="text-sm">No products found.</p>
+        </div>
         {% endfor %}
 
       </div>
 
-      <!-- ================= PAGINATION ================= -->
+      <!-- Pagination -->
       {% if products.has_other_pages %}
-      <div class="mt-10 flex justify-center items-center gap-2">
+      <div class="mt-12 flex flex-wrap justify-center gap-2 fade-up delay-3">
 
         {% if products.has_previous %}
-          <a href="?page={{ products.previous_page_number }}&q={{ q }}{% if selected_category %}&category={{ selected_category }}{% endif %}"
-             class="px-4 py-2 text-sm border rounded-lg hover:bg-gray-100">
-            Prev
-          </a>
+        <a href="?page={{ products.previous_page_number }}&q={{ q }}{% if selected_category %}&category={{ selected_category }}{% endif %}"
+           class="px-4 py-2.5 rounded-xl bg-white border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-900 hover:text-white hover:border-stone-900 transition-all shadow-sm">
+          ← Prev
+        </a>
         {% endif %}
 
         {% for num in products.paginator.page_range %}
           {% if products.number == num %}
-            <span class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg">
-              {{ num }}
-            </span>
+          <span class="px-4 py-2.5 rounded-xl bg-stone-900 text-white text-xs font-semibold shadow">{{ num }}</span>
           {% else %}
-            <a href="?page={{ num }}&q={{ q }}{% if selected_category %}&category={{ selected_category }}{% endif %}"
-               class="px-4 py-2 text-sm border rounded-lg hover:bg-gray-100">
-              {{ num }}
-            </a>
+          <a href="?page={{ num }}&q={{ q }}{% if selected_category %}&category={{ selected_category }}{% endif %}"
+             class="px-4 py-2.5 rounded-xl bg-white border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-900 hover:text-white hover:border-stone-900 transition-all shadow-sm">
+            {{ num }}
+          </a>
           {% endif %}
         {% endfor %}
 
         {% if products.has_next %}
-          <a href="?page={{ products.next_page_number }}&q={{ q }}{% if selected_category %}&category={{ selected_category }}{% endif %}"
-             class="px-4 py-2 text-sm border rounded-lg hover:bg-gray-100">
-            Next
-          </a>
+        <a href="?page={{ products.next_page_number }}&q={{ q }}{% if selected_category %}&category={{ selected_category }}{% endif %}"
+           class="px-4 py-2.5 rounded-xl bg-white border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-900 hover:text-white hover:border-stone-900 transition-all shadow-sm">
+          Next →
+        </a>
         {% endif %}
 
       </div>
@@ -172,208 +532,437 @@
 
     </section>
   </div>
-</main>
+</div>
 
-<!-- ================= MODAL ================= -->
+
+<!-- ═══════════════════════════════════════
+     PERFECT MODAL FIX (MATCHES FIRST IMAGE)
+═══════════════════════════════════════ -->
+
+<!-- REPLACE ONLY YOUR MODAL GRID SECTION WITH THIS -->
+<!-- fixes broken stretched content caused by global .grid override -->
+
 <div id="productModal"
-     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-sm flex">
+     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm"
+     onclick="if(event.target===this)closeModal()">
 
-  <div class="bg-white rounded-3xl overflow-hidden shadow-2xl relative max-w-5xl w-full mx-4">
+  <div class="modal-inner relative bg-white rounded-[34px] shadow-2xl w-[95%] max-w-6xl overflow-hidden">
 
+    <!-- CLOSE -->
     <button onclick="closeModal()"
-            class="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-white/80 hover:bg-gray-100 text-gray-600 hover:text-black shadow">
-      ✕
+      class="absolute top-7 right-7 z-20 w-11 h-11 rounded-full border border-stone-200 bg-white flex items-center justify-center text-stone-400 hover:text-black hover:bg-stone-100 transition">
+      <i class="fas fa-times"></i>
     </button>
 
-    <div class="grid grid-cols-1 md:grid-cols-2">
+    <!-- IMPORTANT: use modal-grid NOT grid -->
+    <div class="modal-grid min-h-[620px]">
 
-      <div class="bg-gray-50 flex items-center justify-center p-10">
-        <img id="modalProductImage" class="max-h-[450px] object-contain">
-      </div>
+      <!-- LEFT -->
+      <div class="bg-stone-100 flex items-center justify-center px-14 py-12 relative">
 
-      <div class="p-10 flex flex-col justify-between">
-
-        <div>
-          <p class="text-xs text-gray-400 uppercase tracking-widest">
-            <span id="modalCategory"></span>
-            <span id="modalSupplier"></span>
-          </p>
-
-          <h2 id="modalProductName" class="text-3xl font-bold mt-2"></h2>
-
-          <div id="modalPriceWrapper" class="mt-5 text-xl font-semibold text-blue-600"></div>
-
-          <div class="mt-6 text-sm">
-            Stock: <span id="modalStockQty"></span> <span id="modalUnit1"></span>
-          </div>
-
-          <div class="mt-2 text-sm">
-            Status: <span id="modalStatus"></span>
-          </div>
-
+        <div id="modalDiscountRibbon" class="absolute top-7 left-7 hidden">
+          <span id="modalDiscountBadge"
+                class="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow"></span>
         </div>
 
-        <button id="modalAddToCart"
-                type="button"
-                class="mt-10 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold">
-          Add to Cart
-        </button>
+        <img id="modalProductImage"
+             src=""
+             class="max-w-[430px] max-h-[500px] w-full object-contain">
+      </div>
 
+      <!-- RIGHT -->
+      <div class="flex items-center px-14 py-12">
+
+        <div class="w-full max-w-[520px]">
+
+          <div class="text-[12px] tracking-[0.34em] uppercase text-stone-400 font-semibold mb-5 flex gap-3">
+            <span id="modalCategory"></span>
+            <span>·</span>
+            <span id="modalSupplier"></span>
+          </div>
+
+          <h2 id="modalProductName"
+              class="font-display text-[30px] leading-[1.02] text-stone-900 mb-8 break-words">
+          </h2>
+
+          <div id="modalPriceWrapper"
+               class="text-[20px] font-semibold text-stone-900 mb-10">
+          </div>
+
+          <div class="h-px bg-stone-200 mb-10"></div>
+
+          <!-- IMPORTANT: use modal-stats NOT grid -->
+          <div class="modal-stats mb-12">
+
+            <div class="bg-stone-50 rounded-3xl px-6 py-6">
+              <p class="text-[11px] uppercase tracking-[0.28em] text-stone-400 mb-2">Stock</p>
+              <p class="text-[15px] font-semibold text-stone-900 leading-none">
+                <span id="modalStockQty"></span>
+                <span id="modalUnit1" class="text-[15px] text-stone-400 ml-1"></span>
+              </p>
+            </div>
+
+            <div class="bg-stone-50 rounded-3xl px-6 py-6">
+              <p class="text-[11px] uppercase tracking-[0.28em] text-stone-400 mb-2">Status</p>
+              <p id="modalStatus"
+                 class="text-[15px] font-semibold text-emerald-600 leading-none">
+              </p>
+            </div>
+
+          </div>
+
+          <button id="modalAddToCart"
+            class="w-full h-[50px] bg-stone-900 hover:bg-black text-white rounded-3xl text-[15px] font-semibold flex items-center justify-center gap-4 shadow-xl transition">
+
+            <i class="fas fa-shopping-bag text-[15px]"></i>
+            Add to Cart
+          </button>
+
+        </div>
       </div>
 
     </div>
-
   </div>
 </div>
 
-<!-- ================= FULL JS (UNCHANGED) ================= -->
+<div id="toast"
+     class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[10000] pointer-events-none hidden">
+  <div class="bg-stone-900 text-white text-sm font-medium px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5">
+    <i class="fas fa-check-circle text-emerald-400"></i>
+    <span id="toastMsg">Added to cart!</span>
+  </div>
+</div>
+
+
 <script>
-let cartIcon;
+  /* ─────────────────────────────────────────────
+   STATE & REFS
+───────────────────────────────────────────── */
+let cartIcon = null;
+let toastTimer = null;
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Match the same cart icon selector the homepage uses
+  cartIcon = document.getElementById("cartIcon")
+          || document.querySelector('[href="{% url "cart" %}"]')
+          || document.querySelector("[data-cart-icon]")
+          || document.querySelector(".cart-icon");
 
-    cartIcon = document.getElementById("cartIcon");
+  /* ── Modal add-to-cart ── */
+  document.getElementById("modalAddToCart").addEventListener("click", function () {
+    const url = this.dataset.url;
+    if (!url) return;
 
-    const modalBtn = document.getElementById("modalAddToCart");
+    const img    = document.getElementById("modalProductImage");
+    const rect   = img.getBoundingClientRect();
+    const cx     = rect.left + rect.width  / 2;
+    const cy     = rect.top  + rect.height / 2;
 
-    if (modalBtn) {
-        modalBtn.addEventListener("click", function (e) {
-            e.preventDefault();
+    addToCart(url, img.src, cx, cy);
+  });
 
-            const url = this.dataset.url;
-            if (!url) return;
+  /* ── Card quick-add buttons ── */
+  document.querySelectorAll(".add-to-cart-btn").forEach(btn => {
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
 
-            const img = document.getElementById("modalProductImage");
-            const rect = img.getBoundingClientRect();
+      const url    = this.dataset.url;
+      const card   = this.closest("[data-img]");
+      const imgSrc = card?.dataset.img;
 
-            addToCart(url, img.src, rect.left, rect.top);
-        });
-    }
+      // Fly from the center of the card image
+      const cardImg = card?.querySelector(".prod-img");
+      const rect    = (cardImg || this).getBoundingClientRect();
+      const cx      = rect.left + rect.width  / 2;
+      const cy      = rect.top  + rect.height / 2;
 
-    const modal = document.getElementById("productModal");
-    if (modal) {
-        modal.addEventListener("click", (e) => {
-            if (e.target.id === "productModal") {
-                closeModal();
-            }
-        });
-    }
-
-    document.querySelectorAll(".add-to-cart-btn").forEach(btn => {
-        btn.addEventListener("click", function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            const url = this.dataset.url;
-            const card = this.closest("[data-img]");
-            const imgSrc = card?.dataset.img;
-
-            const rect = this.getBoundingClientRect();
-
-            addToCart(url, imgSrc, rect.left, rect.top);
-        });
+      addToCart(url, imgSrc, cx, cy);
     });
-
+  });
 });
 
+
+/* ─────────────────────────────────────────────
+   SIDEBAR TOGGLE
+───────────────────────────────────────────── */
 function toggleCat(id) {
-    const el = document.getElementById(`cat-${id}`);
-    document.querySelectorAll('[id^="cat-"]').forEach(i => {
-        if (i.id !== `cat-${id}`) i.classList.add('hidden');
-    });
-    el.classList.toggle('hidden');
+  const el    = document.getElementById(`cat-${id}`);
+  const arrow = document.getElementById(`arrow-${id}`);
+
+  const isOpen = el.classList.contains("open");
+
+  // Close all
+  document.querySelectorAll(".cat-children").forEach(c => c.classList.remove("open"));
+  document.querySelectorAll(".cat-arrow").forEach(a => a.classList.remove("rotated"));
+
+  // Open this one if it was closed
+  if (!isOpen) {
+    el.classList.add("open");
+    arrow.classList.add("rotated");
+  }
 }
 
-async function addToCart(url, imgSrc, x, y) {
 
-    flyToCart(imgSrc, x, y);
+/* ─────────────────────────────────────────────
+   ADD TO CART  (no page reload)
+───────────────────────────────────────────── */
+async function addToCart(url, imgSrc, originX, originY) {
+  // 1. Start the fly animation immediately (optimistic UI)
+  flyToCart(imgSrc, originX, originY);
 
-    const res = await fetch(url, {
-        method: "GET",
-        headers: { "X-Requested-With": "XMLHttpRequest" }
+  // 2. AJAX request
+  try {
+    const res  = await fetch(url, {
+      method:  "GET",
+      headers: { "X-Requested-With": "XMLHttpRequest" }
     });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const data = await res.json();
 
-    if (!cartIcon) return;
+    // 3. Update cart badge
+    updateCartBadge(data.cart_count);
 
-    let badge = cartIcon.querySelector("span");
+    // 4. Show toast
+    showToast("Added to cart!");
 
-    if (!badge) {
-        badge = document.createElement("span");
-        badge.className =
-            "absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full";
-        cartIcon.appendChild(badge);
-    }
-
-    badge.innerText = data.cart_count;
+  } catch (err) {
+    console.error("Add to cart failed:", err);
+    showToast("Something went wrong.", true);
+  }
 }
 
-function flyToCart(imgSrc, x, y) {
 
-    if (!imgSrc) return;
+/* ─────────────────────────────────────────────
+   FLY-TO-CART ANIMATION
+   Uses double-rAF so the browser paints the
+   start state before transitioning to end state.
+───────────────────────────────────────────── */
+function flyToCart(imgSrc, originX, originY) {
+  if (!imgSrc) return;
 
-    const img = document.createElement("img");
-    img.src = imgSrc;
-    document.body.appendChild(img);
+  // Same selector chain the homepage uses — covers all base template variants
+  const cartEl = cartIcon
+              || document.querySelector('[href="{% url "cart" %}"]');
 
-    const cart = cartIcon?.getBoundingClientRect();
-    if (!cart) return;
+  if (!cartEl) return;
 
-    img.style.position = "fixed";
-    img.style.left = x + "px";
-    img.style.top = y + "px";
-    img.style.width = "60px";
-    img.style.height = "60px";
-    img.style.transition = "all 0.8s ease-in-out";
-    img.style.zIndex = "9999";
+  const SIZE_START = 56;
+  const SIZE_END   = 18;
 
-    setTimeout(() => {
-        img.style.left = cart.left + "px";
-        img.style.top = cart.top + "px";
-        img.style.width = "20px";
-        img.style.height = "20px";
-        img.style.opacity = "0.3";
-    }, 10);
+  const cartRect = cartEl.getBoundingClientRect();
 
-    setTimeout(() => img.remove(), 850);
+  // Land dead-center on the cart icon
+  const destX = cartRect.left + cartRect.width  / 2 - SIZE_END / 2;
+  const destY = cartRect.top  + cartRect.height / 2 - SIZE_END / 2;
+
+  // Build the ghost — identical class as homepage (.fly-ghost)
+  const ghost = document.createElement("img");
+  ghost.src       = imgSrc;
+  ghost.className = "fly-ghost";
+
+  // Paint at start position BEFORE any transition runs
+  ghost.style.cssText = `
+    left:          ${originX - SIZE_START / 2}px;
+    top:           ${originY - SIZE_START / 2}px;
+    width:         ${SIZE_START}px;
+    height:        ${SIZE_START}px;
+    opacity:       1;
+    border-radius: 12px;
+  `;
+
+  document.body.appendChild(ghost);
+
+  // Double rAF — browser must paint the start frame first
+  // (same technique as the working homepage)
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      ghost.style.left         = `${destX}px`;
+      ghost.style.top          = `${destY}px`;
+      ghost.style.width        = `${SIZE_END}px`;
+      ghost.style.height       = `${SIZE_END}px`;
+      ghost.style.opacity      = "0";
+      ghost.style.borderRadius = "50%";
+    });
+  });
+
+  setTimeout(() => ghost.remove(), 780);
 }
 
+
+/* ─────────────────────────────────────────────
+   CART BADGE
+───────────────────────────────────────────── */
+function updateCartBadge(count) {
+  if (!cartIcon) return;
+
+  let badge = cartIcon.querySelector("span");
+
+  if (!badge) {
+    badge = document.createElement("span");
+    badge.className =
+      "absolute -top-2 -right-2 bg-red-500 text-white text-[10px] " +
+      "w-4 h-4 flex items-center justify-center rounded-full font-bold";
+    cartIcon.style.position = "relative";
+    cartIcon.appendChild(badge);
+  }
+
+  badge.innerText = count;
+
+  // Pop animation
+  badge.classList.remove("badge-pop");
+  void badge.offsetWidth; // reflow
+  badge.classList.add("badge-pop");
+}
+
+
+/* ─────────────────────────────────────────────
+   TOAST NOTIFICATION
+───────────────────────────────────────────── */
+function showToast(message, isError = false) {
+  const toast    = document.getElementById("toast");
+  const toastMsg = document.getElementById("toastMsg");
+  const icon     = toast.querySelector("i");
+
+  toastMsg.textContent = message;
+  icon.className = isError
+    ? "fas fa-exclamation-circle text-red-400"
+    : "fas fa-check-circle text-emerald-400";
+
+  toast.classList.remove("hidden", "toast-out");
+  toast.classList.add("toast-in");
+
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.classList.remove("toast-in");
+    toast.classList.add("toast-out");
+    setTimeout(() => toast.classList.add("hidden"), 320);
+  }, 2200);
+}
+
+
+/* ─────────────────────────────────────────────
+   MODAL
+───────────────────────────────────────────── */
 function showProduct(card) {
+  const modal = document.getElementById("productModal");
 
-    const modal = document.getElementById("productModal");
+  // Populate fields
+  document.getElementById("modalProductName").innerText  = card.dataset.name    || "";
+  document.getElementById("modalProductImage").src       = card.dataset.img     || "";
+  document.getElementById("modalCategory").innerText     = card.dataset.category || "";
+  document.getElementById("modalSupplier").innerText     = card.dataset.supplier || "";
+  document.getElementById("modalStockQty").innerText     = card.dataset.stock   || "—";
+  document.getElementById("modalUnit1").innerText        = card.dataset.unit    || "";
+  document.getElementById("modalStatus").innerText       = card.dataset.status  || "";
 
-    modal.classList.remove("hidden");
-    modal.classList.add("flex");
+  // Price
+  const disc    = parseFloat(card.dataset.discount)     || 0;
+  const final   = parseFloat(card.dataset.finalPrice)   || 0;
+  const selling = parseFloat(card.dataset.sellingPrice) || 0;
 
-    document.getElementById("modalProductName").innerText = card.dataset.name;
-    document.getElementById("modalProductImage").src = card.dataset.img;
+  const priceWrap = document.getElementById("modalPriceWrapper");
+  if (disc > 0) {
+    priceWrap.innerHTML = `
+      <span class="text-2xl font-bold text-red-500">₱${final.toFixed(2)}</span>
+      <span class="text-base text-stone-400 line-through">₱${selling.toFixed(2)}</span>
+      <span class="text-xs bg-red-50 text-red-500 font-bold px-2 py-0.5 rounded-full">${disc.toFixed(0)}% OFF</span>
+    `;
+    document.getElementById("modalDiscountRibbon").classList.remove("hidden");
+    document.getElementById("modalDiscountBadge").textContent = `-${disc.toFixed(0)}%`;
+  } else {
+    priceWrap.innerHTML = `<span class="text-2xl font-bold text-stone-900">₱${selling.toFixed(2)}</span>`;
+    document.getElementById("modalDiscountRibbon").classList.add("hidden");
+  }
 
-    document.getElementById("modalCategory").innerText = card.dataset.category || "";
-    document.getElementById("modalSupplier").innerText = card.dataset.supplier || "";
-    document.getElementById("modalStockQty").innerText = card.dataset.stock || "";
-    document.getElementById("modalUnit1").innerText = card.dataset.unit || "";
-    document.getElementById("modalStatus").innerText = card.dataset.status || "";
+  // Status color
+  const statusEl = document.getElementById("modalStatus");
+  const status   = (card.dataset.status || "").toLowerCase();
+  statusEl.className = "text-sm font-semibold " + (
+    status.includes("available") || status.includes("active") || status.includes("in stock")
+      ? "text-emerald-600"
+      : status.includes("out") || status.includes("unavailable")
+        ? "text-red-500"
+        : "text-stone-800"
+  );
 
-    let priceHTML = "";
+  // Store URL for add-to-cart
+  document.getElementById("modalAddToCart").dataset.url = card.dataset.url;
 
-    if (card.dataset.discount > 0) {
-        priceHTML = `
-            <span class="text-red-600 font-bold">₱${parseFloat(card.dataset.finalPrice).toFixed(2)}</span>
-            <span class="line-through text-gray-400 ml-2">₱${parseFloat(card.dataset.sellingPrice).toFixed(2)}</span>
-        `;
-    } else {
-        priceHTML = `<span class="font-bold">₱${parseFloat(card.dataset.sellingPrice).toFixed(2)}</span>`;
-    }
-
-    document.getElementById("modalPriceWrapper").innerHTML = priceHTML;
-
-    document.getElementById("modalAddToCart").dataset.url = card.dataset.url;
+  // Show modal
+  modal.style.display = "flex";
+  requestAnimationFrame(() => modal.classList.add("modal-visible"));
+  document.body.style.overflow = "hidden";
 }
 
 function closeModal() {
-    document.getElementById("productModal").classList.add("hidden");
+  const modal = document.getElementById("productModal");
+  modal.classList.remove("modal-visible");
+  modal.style.opacity = "0";
+  setTimeout(() => {
+    modal.style.display  = "none";
+    modal.style.opacity  = "";
+    document.body.style.overflow = "";
+  }, 220);
 }
+
+// ESC key closes modal
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") closeModal();
+});
+/* ─────────────────────────────
+   HERO SLIDER AUTO ROTATE
+───────────────────────────── */
+window.heroIndex = window.heroIndex ?? 0;
+
+function showHeroSlide(index) {
+  const slides = document.querySelectorAll(".hero-slide");
+  const dots = document.querySelectorAll(".dot");
+
+  slides.forEach((slide, i) => {
+    slide.style.opacity = (i === index) ? "1" : "0";
+  });
+
+  dots.forEach((dot, i) => {
+    dot.className = (i === index)
+      ? "dot w-2 h-2 rounded-full bg-white"
+      : "dot w-2 h-2 rounded-full bg-white/40";
+  });
+}
+
+function nextHeroSlide() {
+  const slides = document.querySelectorAll(".hero-slide");
+  window.heroIndex = (window.heroIndex + 1) % slides.length;
+  showHeroSlide(window.heroIndex);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  showHeroSlide(0);
+
+  // prevent multiple intervals stacking
+  if (!window.heroIntervalStarted) {
+    window.heroIntervalStarted = true;
+    setInterval(nextHeroSlide, 5000);
+  }
+});
+
+document.querySelectorAll(".subcategory-link").forEach(link => {
+    link.addEventListener("click", () => {
+        sessionStorage.setItem("scrollPos", window.scrollY);
+    });
+});
+
+window.addEventListener("load", () => {
+    const pos = sessionStorage.getItem("scrollPos");
+
+    if (pos !== null) {
+        window.scrollTo(0, parseInt(pos));
+        sessionStorage.removeItem("scrollPos");
+    }
+});
+
 </script>
 
 {% endblock %}

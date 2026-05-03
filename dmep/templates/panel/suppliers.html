@@ -72,7 +72,7 @@
         </button>
 
         <!-- DELETE (POST FIXED) -->
-        <form method="POST" action="{% url 'supplier_list' %}">
+        <!-- <form method="POST" action="{% url 'supplier_list' %}"> -->
             {% csrf_token %}
             <input type="hidden" name="action" value="delete">
             <input type="hidden" name="id" value="{{ s.id }}">

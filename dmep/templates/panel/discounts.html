@@ -1,294 +1,480 @@
 {% extends 'panel/base.html' %}
 {% block content %}
 
-<div class="flex justify-between items-center mb-6">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+  body { font-family: 'Inter', sans-serif; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { animation: fadeUp 0.45s cubic-bezier(0.22,1,0.36,1) both; }
+  .d1 { animation-delay: 0.05s; }
+  .d2 { animation-delay: 0.10s; }
+  .d3 { animation-delay: 0.15s; }
+  .d4 { animation-delay: 0.20s; }
+
+  .prod-row { transition: background 0.15s; }
+  .prod-row:hover { background: #f8fafc; }
+
+  /* Dropdown */
+  .action-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    width: 160px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.12);
+    z-index: 9999;
+    overflow: hidden;
+  }
+  .action-menu.open { display: block; }
+  .action-menu button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #334155;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.12s;
+    font-family: 'Inter', sans-serif;
+  }
+  .action-menu button:hover { background: #f1f5f9; }
+  .action-menu .danger { color: #ef4444; }
+  .action-menu .danger:hover { background: #fef2f2; }
+  .action-menu .divider { height: 1px; background: #f1f5f9; margin: 2px 0; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,0.5);
+    backdrop-filter: blur(4px);
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+
+  /* Form inputs */
+  .form-input {
+    width: 100%;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 9px 13px;
+    font-size: 13.5px;
+    color: #1e293b;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    font-family: 'Inter', sans-serif;
+    background: #fff;
+  }
+  .form-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+  }
+  .form-label {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 5px;
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+</style>
+
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<div class="fade-up flex items-start justify-between flex-wrap gap-5 mb-7">
+  <div>
+    <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5">Promotions</p>
+    <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Discount Management</h1>
+    <p class="text-sm text-slate-400 mt-0.5">Create and manage apparel discounts and promotions.</p>
+  </div>
+
+  <button onclick="openModal('create')"
+          class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.97] text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm shadow-indigo-200">
+    <i class="fas fa-plus text-xs"></i>
+    Add Discount
+  </button>
+</div>
+
+
+<!-- ═══════════════ STATS ═══════════════ -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-7">
+
+  <div class="fade-up d1 bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex items-center gap-4">
+    <div class="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500 text-lg shrink-0">
+      <i class="fas fa-tag"></i>
+    </div>
     <div>
-        <h1 class="text-2xl font-semibold">Discount Management</h1>
-        <p class="text-sm text-slate-400">Manage apparel discounts</p>
+      <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total</p>
+      <p class="text-3xl font-bold text-slate-800 leading-tight">{{ discounts|length }}</p>
+      <p class="text-[11px] text-slate-400 mt-0.5">All discounts</p>
     </div>
+  </div>
 
-    <button onclick="openModal('create')"
-        class="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition">
-        + Add Discount
-    </button>
+  <div class="fade-up d2 bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex items-center gap-4">
+    <div class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500 text-lg shrink-0">
+      <i class="fas fa-circle-check"></i>
+    </div>
+    <div>
+      <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Active</p>
+      <p class="text-3xl font-bold text-emerald-600 leading-tight">{{ active_count }}</p>
+      <p class="text-[11px] text-slate-400 mt-0.5">Currently running</p>
+    </div>
+  </div>
+
+  <div class="fade-up d3 bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex items-center gap-4">
+    <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-400 text-lg shrink-0">
+      <i class="fas fa-clock-rotate-left"></i>
+    </div>
+    <div>
+      <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Expired</p>
+      <p class="text-3xl font-bold text-red-500 leading-tight">{{ expired_count }}</p>
+      <p class="text-[11px] text-slate-400 mt-0.5">No longer valid</p>
+    </div>
+  </div>
+
 </div>
 
-<!-- ================= STATS ================= -->
-<div class="grid grid-cols-3 gap-4 mb-6">
 
-    <div class="bg-white p-4 border rounded shadow-sm">
-        <p class="text-sm text-gray-500">Total</p>
-        <p class="text-xl font-semibold">{{ discounts|length }}</p>
-    </div>
+<!-- ═══════════════ TABLE ═══════════════ -->
+<div class="fade-up d4 bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
 
-    <div class="bg-white p-4 border rounded shadow-sm">
-        <p class="text-sm text-gray-500">Active</p>
-        <p class="text-xl font-semibold text-green-600">{{ active_count }}</p>
-    </div>
+  <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+    <p class="text-sm font-semibold text-slate-700">All Discounts</p>
+    <p class="text-xs text-slate-400">{{ discounts|length }} item{{ discounts|length|pluralize }}</p>
+  </div>
 
-    <div class="bg-white p-4 border rounded shadow-sm">
-        <p class="text-sm text-gray-500">Expired</p>
-        <p class="text-xl font-semibold text-red-500">{{ expired_count }}</p>
-    </div>
+  <div class="overflow-x-auto">
+  <table class="w-full text-sm">
 
-</div>
+    <thead>
+    <tr class="bg-slate-50 border-b border-slate-100">
+      <th class="px-5 py-3.5 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Name</th>
+      <th class="px-5 py-3.5 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Type</th>
+      <th class="px-5 py-3.5 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Value</th>
+      <th class="px-5 py-3.5 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Scope</th>
+      <th class="px-5 py-3.5 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Validity</th>
+      <th class="px-5 py-3.5 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Status</th>
+      <th class="px-5 py-3.5 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider w-16">Actions</th>
+    </tr>
+    </thead>
 
-<!-- ================= TABLE ================= -->
-<div class="bg-white border rounded shadow-sm overflow-visible">
+    <tbody class="divide-y divide-slate-50">
+    {% for d in discounts %}
+    <tr class="prod-row">
 
-<table class="w-full text-sm">
-
-<thead class="bg-gray-900 text-white text-xs uppercase tracking-wide">
-<tr>
-    <th class="p-3 text-left">Name</th>
-    <th class="p-3 text-left">Type</th>
-    <th class="p-3 text-left">Value</th>
-    <th class="p-3 text-left">Scope</th>
-    <th class="p-3 text-left">Validity</th>
-    <th class="p-3 text-left">Status</th>
-    <th class="p-3 text-right">Action</th>
-</tr>
-</thead>
-
-<tbody>
-
-{% for d in discounts %}
-<tr class="border-b hover:bg-gray-50 transition">
-
-    <td class="p-3 font-medium">{{ d.name }}</td>
-    <td class="p-3 capitalize">{{ d.type }}</td>
-    <td class="p-3">{{ d.value }}</td>
-
-    <td class="p-3">
-        {% if d.applies_to == "all" %}
-            <span class="text-gray-600">All Products</span>
-        {% elif d.applies_to == "category" %}
-            <div class="flex flex-wrap gap-1">
-            {% for c in d.categories.all %}
-                <span class="bg-gray-100 px-2 py-1 text-xs rounded">{{ c.name }}</span>
-            {% empty %} — {% endfor %}
-            </div>
-        {% elif d.applies_to == "product" %}
-            <div class="flex flex-wrap gap-1">
-            {% for p in d.products.all %}
-                <span class="bg-green-100 text-green-700 px-2 py-1 text-xs rounded">{{ p.name }}</span>
-            {% empty %} — {% endfor %}
-            </div>
-        {% endif %}
-    </td>
-
-    <td class="p-3 text-xs text-gray-500">
-        {{ d.valid_from|default:"—" }} → {{ d.valid_until|default:"—" }}
-    </td>
-
-    <td class="p-3">
-        <span class="text-xs px-2 py-1 rounded font-medium
-            {% if d.status == 'active' %} bg-green-100 text-green-700
-            {% elif d.status == 'expired' %} bg-red-100 text-red-700
-            {% else %} bg-gray-100 text-gray-600 {% endif %}">
-            {{ d.status|title }}
-        </span>
-    </td>
-
-    <!-- ACTION -->
-    <td class="p-3 text-right relative">
-
-        <button onclick="toggleMenu(event, '{{ d.id }}')"
-            class="px-2 py-1 rounded hover:bg-gray-200">
-            ⋮
-        </button>
-
-        <div id="menu-{{ d.id }}"
-            class="hidden absolute right-3 mt-2 w-32 bg-white border rounded shadow-md z-10">
-
-            <button onclick="openEdit(
-                '{{ d.id }}',
-                '{{ d.name|escapejs }}',
-                '{{ d.type }}',
-                '{{ d.value }}',
-                '{{ d.applies_to }}',
-                '{{ d.status }}',
-                '{{ d.valid_from|date:"Y-m-d" }}',
-                '{{ d.valid_until|date:"Y-m-d" }}'
-            )"
-            class="block w-full text-left px-3 py-2 hover:bg-gray-100">
-                Edit
-            </button>
-
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="delete">
-                <input type="hidden" name="id" value="{{ d.id }}">
-
-                <button onclick="return confirm('Delete this discount?')"
-                    class="block w-full text-left px-3 py-2 text-red-600 hover:bg-red-50">
-                    Delete
-                </button>
-            </form>
-
+      <!-- Name -->
+      <td class="px-5 py-3.5">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
+            <i class="fas fa-percent text-amber-500 text-xs"></i>
+          </div>
+          <span class="font-semibold text-slate-800">{{ d.name }}</span>
         </div>
+      </td>
 
-    </td>
+      <!-- Type -->
+      <td class="px-5 py-3.5">
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold
+          {% if d.type == 'percentage' %}bg-indigo-50 text-indigo-600{% else %}bg-sky-50 text-sky-600{% endif %}">
+          <i class="fas {% if d.type == 'percentage' %}fa-percent{% else %}fa-dollar-sign{% endif %} text-[9px]"></i>
+          {{ d.type|capfirst }}
+        </span>
+      </td>
 
-</tr>
-{% endfor %}
+      <!-- Value -->
+      <td class="px-5 py-3.5 font-bold text-slate-800 tabular-nums">
+        {% if d.type == 'percentage' %}{{ d.value }}%{% else %}₱{{ d.value }}{% endif %}
+      </td>
 
-</tbody>
-</table>
+      <!-- Scope -->
+      <td class="px-5 py-3.5">
+        {% if d.applies_to == "all" %}
+          <span class="inline-flex items-center gap-1 text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">
+            <i class="fas fa-layer-group text-[9px]"></i> All Products
+          </span>
+        {% elif d.applies_to == "category" %}
+          <div class="flex flex-wrap gap-1">
+            {% for c in d.categories.all %}
+            <span class="bg-violet-50 text-violet-600 text-xs font-medium px-2 py-0.5 rounded-lg">{{ c.name }}</span>
+            {% empty %}<span class="text-slate-400 text-xs">—</span>{% endfor %}
+          </div>
+        {% elif d.applies_to == "product" %}
+          <div class="flex flex-wrap gap-1">
+            {% for p in d.products.all %}
+            <span class="bg-emerald-50 text-emerald-600 text-xs font-medium px-2 py-0.5 rounded-lg">{{ p.name }}</span>
+            {% empty %}<span class="text-slate-400 text-xs">—</span>{% endfor %}
+          </div>
+        {% endif %}
+      </td>
+
+      <!-- Validity -->
+      <td class="px-5 py-3.5">
+        <div class="text-xs text-slate-500 space-y-0.5">
+          <div class="flex items-center gap-1.5">
+            <i class="fas fa-calendar-day text-slate-300 text-[9px]"></i>
+            {{ d.valid_from|default:"—" }}
+          </div>
+          <div class="flex items-center gap-1.5">
+            <i class="fas fa-calendar-xmark text-slate-300 text-[9px]"></i>
+            {{ d.valid_until|default:"—" }}
+          </div>
+        </div>
+      </td>
+
+      <!-- Status -->
+      <td class="px-5 py-3.5">
+        {% if d.status == 'active' %}
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-50 text-emerald-600">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>Active
+        </span>
+        {% elif d.status == 'expired' %}
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-red-50 text-red-500">
+          <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>Expired
+        </span>
+        {% else %}
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-500">
+          <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>{{ d.status|title }}
+        </span>
+        {% endif %}
+      </td>
+
+      <!-- Actions -->
+      <td class="px-5 py-3.5 relative">
+        <button onclick="toggleMenu(event, '{{ d.id }}')"
+                class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors">
+          <i class="fas fa-ellipsis-h text-sm"></i>
+        </button>
+
+        <div id="menu-{{ d.id }}" class="action-menu">
+          <button onclick="openEdit(
+              '{{ d.id }}',
+              '{{ d.name|escapejs }}',
+              '{{ d.type }}',
+              '{{ d.value }}',
+              '{{ d.applies_to }}',
+              '{{ d.status }}',
+              '{{ d.valid_from|date:'Y-m-d' }}',
+              '{{ d.valid_until|date:'Y-m-d' }}'
+          )">
+            <i class="fas fa-pen-to-square text-indigo-400 w-4"></i>
+            Edit
+          </button>
+          <div class="divider"></div>
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{ d.id }}">
+            <button type="submit"
+                    onclick="return confirm('Delete this discount?')"
+                    class="danger">
+              <i class="fas fa-trash-can text-red-400 w-4"></i>
+              Delete
+            </button>
+          </form>
+        </div>
+      </td>
+
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="7" class="px-5 py-16 text-center text-slate-400">
+        <i class="fas fa-tag text-3xl mb-3 block opacity-20"></i>
+        <p class="text-sm">No discounts yet. Create your first one.</p>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+
+  </table>
+  </div>
 </div>
 
-<!-- ================= MODAL ================= -->
-<div id="modal" class="hidden fixed inset-0 bg-black/50 z-50">
 
-<div class="flex justify-center items-center h-full">
+<!-- ═══════════════ MODAL ═══════════════ -->
+<div id="modal" class="modal-overlay" onclick="if(event.target===this)closeModal()">
+<div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden">
 
-<form method="post" class="bg-white w-[500px] p-5 rounded shadow relative">
-
-    {% csrf_token %}
-
-    <!-- CLOSE BUTTON -->
+  <!-- Header -->
+  <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+    <div>
+      <h2 id="modalTitle" class="text-base font-bold text-slate-800">Add Discount</h2>
+      <p class="text-xs text-slate-400 mt-0.5">Fill in the discount details below.</p>
+    </div>
     <button type="button" onclick="closeModal()"
-        class="absolute top-2 right-3 text-xl text-gray-500 hover:text-red-500">
-        ✕
+            class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors">
+      <i class="fas fa-times text-xs"></i>
     </button>
+  </div>
 
+  <!-- Form -->
+  <form method="post" class="px-6 py-5">
+    {% csrf_token %}
     <input type="hidden" name="action" id="action">
-    <input type="hidden" name="id" id="id">
+    <input type="hidden" name="id"     id="id">
 
-    <input name="name" id="name" placeholder="Name"
-        class="w-full border p-2 mb-2 rounded">
+    <div class="grid grid-cols-2 gap-4 mb-4">
 
-    <select name="type" id="type" class="w-full border p-2 mb-2 rounded">
-        <option value="percentage">Percentage</option>
-        <option value="fixed">Fixed</option>
-    </select>
+      <div class="col-span-2">
+        <label class="form-label">Discount Name</label>
+        <input name="name" id="name" class="form-input" placeholder="e.g. Summer Sale">
+      </div>
 
-    <input name="value" id="value" placeholder="Value"
-        class="w-full border p-2 mb-2 rounded">
+      <div>
+        <label class="form-label">Type</label>
+        <select name="type" id="type" class="form-input">
+          <option value="percentage">Percentage (%)</option>
+          <option value="fixed">Fixed (₱)</option>
+        </select>
+      </div>
 
-    <input type="date" name="valid_from" id="valid_from"
-        class="w-full border p-2 mb-2 rounded">
+      <div>
+        <label class="form-label">Value</label>
+        <input name="value" id="value" class="form-input" placeholder="e.g. 20">
+      </div>
 
-    <input type="date" name="valid_until" id="valid_until"
-        class="w-full border p-2 mb-2 rounded">
+      <div>
+        <label class="form-label">Valid From</label>
+        <input type="date" name="valid_from" id="valid_from" class="form-input">
+      </div>
 
-    <select name="applies_to" id="applies_to"
-        class="w-full border p-2 mb-2 rounded"
-        onchange="toggleScope()">
-        <option value="all">All</option>
-        <option value="category">Category</option>
-        <option value="product">Product</option>
-    </select>
+      <div>
+        <label class="form-label">Valid Until</label>
+        <input type="date" name="valid_until" id="valid_until" class="form-input">
+      </div>
 
-    <select name="category" id="category"
-        class="w-full border p-2 mb-2 rounded hidden">
-        {% for c in categories %}
-            <option value="{{ c.id }}">{{ c.name }}</option>
-        {% endfor %}
-    </select>
+      <div class="col-span-2">
+        <label class="form-label">Applies To</label>
+        <select name="applies_to" id="applies_to" class="form-input" onchange="toggleScope()">
+          <option value="all">All Products</option>
+          <option value="category">By Category</option>
+          <option value="product">Specific Products</option>
+        </select>
+      </div>
 
-    <select name="products" id="products"
-        class="w-full border p-2 mb-2 rounded hidden"
-        multiple>
-        {% for p in products %}
-            <option value="{{ p.id }}">{{ p.name }}</option>
-        {% endfor %}
-    </select>
+      <div class="col-span-2 hidden" id="category-wrap">
+        <label class="form-label">Category</label>
+        <select name="category" id="category" class="form-input">
+          {% for c in categories %}
+          <option value="{{ c.id }}">{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-    <select name="status" id="status"
-        class="w-full border p-2 mb-4 rounded">
-        <option value="active">Active</option>
-        <option value="inactive">Inactive</option>
-        <option value="expired">Expired</option>
-    </select>
+      <div class="col-span-2 hidden" id="products-wrap">
+        <label class="form-label">Products <span class="normal-case text-slate-400 font-normal">(hold Ctrl/Cmd to select multiple)</span></label>
+        <select name="products" id="products" class="form-input" multiple style="height:110px;">
+          {% for p in products %}
+          <option value="{{ p.id }}">{{ p.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-    <div class="flex justify-end gap-2">
-        <button type="button" onclick="closeModal()"
-            class="border px-3 py-1 rounded">
-            Cancel
-        </button>
+      <div class="col-span-2">
+        <label class="form-label">Status</label>
+        <select name="status" id="status" class="form-input">
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="expired">Expired</option>
+        </select>
+      </div>
 
-        <button class="bg-black text-white px-3 py-1 rounded hover:bg-gray-800">
-            Save
-        </button>
     </div>
 
-</form>
+    <div class="flex gap-3">
+      <button type="button" onclick="closeModal()"
+              class="flex-1 border border-slate-200 text-slate-600 py-3 rounded-xl text-sm font-semibold hover:bg-slate-50 transition-colors">
+        Cancel
+      </button>
+      <button type="submit"
+              class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2">
+        <i class="fas fa-floppy-disk"></i>
+        Save Discount
+      </button>
+    </div>
 
+  </form>
 </div>
 </div>
 
-<!-- ================= JS ================= -->
+
+<!-- ═══════════════ JS ═══════════════ -->
 <script>
-
 let openMenuId = null;
 
-/* MENU TOGGLE */
-function toggleMenu(event, id){
-    event.stopPropagation();
-
-    if(openMenuId && openMenuId !== id){
-        document.getElementById("menu-" + openMenuId)?.classList.add("hidden");
-    }
-
-    const menu = document.getElementById("menu-" + id);
-    menu.classList.toggle("hidden");
-
-    openMenuId = id;
+function toggleMenu(event, id) {
+  event.stopPropagation();
+  if (openMenuId && openMenuId !== id) {
+    document.getElementById("menu-" + openMenuId)?.classList.remove("open");
+  }
+  const menu = document.getElementById("menu-" + id);
+  menu.classList.toggle("open");
+  openMenuId = menu.classList.contains("open") ? id : null;
 }
 
-/* CLOSE MENU ON OUTSIDE CLICK */
-document.addEventListener("click", function(){
-    if(openMenuId){
-        document.getElementById("menu-" + openMenuId)?.classList.add("hidden");
-        openMenuId = null;
-    }
+document.addEventListener("click", () => {
+  if (openMenuId) {
+    document.getElementById("menu-" + openMenuId)?.classList.remove("open");
+    openMenuId = null;
+  }
 });
 
-/* MODAL */
-function openModal(action){
-    document.getElementById("modal").classList.remove("hidden");
-    document.getElementById("action").value = action;
-}
-
-function closeModal(){
-    document.getElementById("modal").classList.add("hidden");
-}
-
-/* EDIT */
-function openEdit(id,name,type,value,applies,status,valid_from,valid_until){
-
-    openModal("update");
-
-    document.getElementById("id").value = id;
-    document.getElementById("name").value = name;
-    document.getElementById("type").value = type;
-    document.getElementById("value").value = value;
-    document.getElementById("applies_to").value = applies;
-    document.getElementById("status").value = status;
-
-    document.getElementById("valid_from").value = valid_from || "";
-    document.getElementById("valid_until").value = valid_until || "";
-
+function openModal(action) {
+  document.getElementById("modal").classList.add("open");
+  document.getElementById("action").value = action;
+  document.getElementById("modalTitle").innerText =
+    action === "create" ? "Add Discount" : "Edit Discount";
+  if (action === "create") {
+    document.querySelector("#modal form").reset();
     toggleScope();
+  }
 }
 
-/* SCOPE */
-function toggleScope(){
-    let v = document.getElementById("applies_to").value;
-
-    document.getElementById("category").classList.add("hidden");
-    document.getElementById("products").classList.add("hidden");
-
-    if(v === "category"){
-        document.getElementById("category").classList.remove("hidden");
-    }
-
-    if(v === "product"){
-        document.getElementById("products").classList.remove("hidden");
-    }
+function closeModal() {
+  document.getElementById("modal").classList.remove("open");
 }
 
+function openEdit(id, name, type, value, applies, status, valid_from, valid_until) {
+  openModal("update");
+  document.getElementById("id").value         = id;
+  document.getElementById("name").value       = name;
+  document.getElementById("type").value       = type;
+  document.getElementById("value").value      = value;
+  document.getElementById("applies_to").value = applies;
+  document.getElementById("status").value     = status;
+  document.getElementById("valid_from").value = valid_from  || "";
+  document.getElementById("valid_until").value= valid_until || "";
+  toggleScope();
+}
+
+function toggleScope() {
+  const v = document.getElementById("applies_to").value;
+  document.getElementById("category-wrap").classList.toggle("hidden", v !== "category");
+  document.getElementById("products-wrap").classList.toggle("hidden",  v !== "product");
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") closeModal();
+});
 </script>
 
 {% endblock %}

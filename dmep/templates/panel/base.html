@@ -3,110 +3,138 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Panel</title>
+    <title>DMEP Admin</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     {% block extra_css %}{% endblock %}
 </head>
 
-<body class="bg-slate-100 text-slate-800">
+<body class="bg-gradient-to-br from-slate-100 to-slate-200 text-slate-800">
 
-<!-- Mobile Top Bar -->
-<div class="md:hidden flex items-center justify-between bg-slate-900 text-white p-4">
-    <span class="font-semibold">Admin Panel</span>
+<!-- MOBILE TOP BAR -->
+<div class="md:hidden flex items-center justify-between bg-slate-900 text-white px-4 py-3 shadow-md">
+    <div class="flex items-center gap-2">
+        <span class="text-lg font-bold tracking-wide">DMEP</span>
+        <span class="text-xs text-slate-400">Admin</span>
+    </div>
     <button onclick="toggleSidebar()" class="text-xl">
         <i class="fa-solid fa-bars"></i>
     </button>
 </div>
 
-<!-- Sidebar -->
+<!-- SIDEBAR -->
 <aside id="sidebar"
-    class="fixed md:translate-x-0 -translate-x-full md:translate-x-0 transition-transform duration-300
-           top-0 left-0 w-64 h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white shadow-xl flex flex-col">
+    class="fixed md:translate-x-0 -translate-x-full transition-transform duration-300
+           top-0 left-0 w-64 h-screen bg-gradient-to-b from-slate-950 to-slate-900 text-white shadow-2xl flex flex-col z-50">
 
-    <!-- Header -->
-    <div class="p-6 border-b border-slate-700">
-        <h2 class="text-xl font-bold">Admin Panel</h2>
-        <p class="text-xs text-slate-400">Management Dashboard</p>
+    <!-- BRAND -->
+    <div class="p-6 border-b border-slate-800">
+        <h2 class="text-2xl font-extrabold tracking-wide">DMEP</h2>
+        <p class="text-xs text-slate-400 mt-1">Admin Panel</p>
     </div>
 
-    <!-- Navigation -->
-    <nav class="p-4 space-y-1 text-sm flex-1 overflow-y-auto">
+    <!-- NAV -->
+    <nav class="p-4 space-y-6 text-sm flex-1 overflow-y-auto">
 
         {% with request.resolver_match.url_name as url_name %}
 
-        <a href="{% url 'admin_dashboard' %}"
-           class="flex items-center gap-3 px-3 py-2 rounded-lg transition
-           {% if url_name == 'admin_dashboard' %}bg-slate-700{% else %}hover:bg-slate-800{% endif %}">
-            <i class="fa-solid fa-gauge"></i> Dashboard
-        </a>
+        <!-- MAIN -->
+        <div>
+            <p class="text-xs text-slate-500 uppercase tracking-wider mb-2 px-2">
+                Main
+            </p>
 
-        <a href="{% url 'product_list' %}"
-           class="flex items-center gap-3 px-3 py-2 rounded-lg transition
-           {% if url_name == 'product_list' %}bg-slate-700{% else %}hover:bg-slate-800{% endif %}">
-            <i class="fa-solid fa-box"></i> Products
-        </a>
+            <a href="{% url 'admin_dashboard' %}"
+               class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition
+               {% if url_name == 'admin_dashboard' %}bg-blue-600 text-white shadow-md{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <i class="fa-solid fa-gauge"></i> Dashboard
+            </a>
+        </div>
 
-        <a href="{% url 'category_list' %}"
-           class="flex items-center gap-3 px-3 py-2 rounded-lg transition
-           {% if url_name == 'category_list' %}bg-slate-700{% else %}hover:bg-slate-800{% endif %}">
-            <i class="fa-solid fa-tags"></i> Categories
-        </a>
+        <!-- STORE -->
+        <div>
+            <p class="text-xs text-slate-500 uppercase tracking-wider mb-2 px-2">
+                Store
+            </p>
 
-        <a href="{% url 'discounts' %}"
-           class="flex items-center gap-3 px-3 py-2 rounded-lg transition
-           {% if url_name == 'discounts' %}bg-slate-700{% else %}hover:bg-slate-800{% endif %}">
-            <i class="fa-solid fa-percent"></i> Discounts
-        </a>
+            <a href="{% url 'product_list' %}"
+               class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition
+               {% if url_name == 'product_list' %}bg-blue-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <i class="fa-solid fa-box"></i> Products
+            </a>
 
-        <a href="{% url 'supplier_list' %}"
-           class="flex items-center gap-3 px-3 py-2 rounded-lg transition
-           {% if url_name == 'supplier_list' %}bg-slate-700{% else %}hover:bg-slate-800{% endif %}">
-            <i class="fa-solid fa-truck"></i> Suppliers
-        </a>
+            <a href="{% url 'category_list' %}"
+               class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition
+               {% if url_name == 'category_list' %}bg-blue-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <i class="fa-solid fa-tags"></i> Categories
+            </a>
 
-        <a href="{% url 'po_list' %}"
-        class="flex items-center gap-3 px-3 py-2 rounded-lg transition
-        {% if url_name == 'po_list' or url_name == 'po_create' or url_name == 'po_detail' %}bg-slate-700{% else %}hover:bg-slate-800{% endif %}">
-            <i class="fa-solid fa-file-invoice"></i> Purchase Orders
-        </a>
-        
-        <a href="{% url 'stock_movement_list' %}"
-           class="flex items-center gap-3 px-3 py-2 rounded-lg transition
-           {% if url_name == 'stock_movement_list' %}bg-slate-700{% else %}hover:bg-slate-800{% endif %}">
-            <i class="fa-solid fa-box"></i> Stock Movements
-        </a>
+            <a href="{% url 'discounts' %}"
+               class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition
+               {% if url_name == 'discounts' %}bg-blue-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <i class="fa-solid fa-percent"></i> Discounts
+            </a>
+        </div>
 
-        
+        <!-- OPERATIONS -->
+        <div>
+            <p class="text-xs text-slate-500 uppercase tracking-wider mb-2 px-2">
+                Operations
+            </p>
 
-        <a href="{% url 'customer_list' %}"
-           class="flex items-center gap-3 px-3 py-2 rounded-lg transition
-           {% if url_name == 'customer_list' %}bg-slate-700{% else %}hover:bg-slate-800{% endif %}">
-            <i class="fa-solid fa-users"></i> Customers
-        </a>
+            <a href="{% url 'purchase' %}"
+               class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition
+               {% if url_name == 'purchase' or url_name == 'purchase_add' or url_name == 'purchase_remove' or url_name == 'purchase_checkout' %}bg-blue-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <i class="fa-solid fa-file-invoice"></i> Purchase Orders
+            </a>
 
-        <a href="{% url 'sale_list' %}"
-           class="flex items-center gap-3 px-3 py-2 rounded-lg transition
-           {% if url_name == 'sale_list' %}bg-slate-700{% else %}hover:bg-slate-800{% endif %}">
-            <i class="fa-solid fa-cart-shopping"></i> Sales
-        </a>
+            <a href="{% url 'pos_terminal' %}"
+               class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition
+               {% if url_name == 'pos_terminal' %}bg-blue-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <i class="fa-solid fa-terminal"></i> POS Terminal
+            </a>
+
+            <a href="{% url 'stock_movement_list' %}"
+               class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition
+               {% if url_name == 'stock_movement_list' %}bg-blue-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <i class="fa-solid fa-box"></i> Stock Movements
+            </a>
+
+            <a href="{% url 'sale_list' %}"
+               class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition
+               {% if url_name == 'sale_list' %}bg-blue-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <i class="fa-solid fa-cart-shopping"></i> Sales
+            </a>
+        </div>
+
+        <!-- USERS -->
+        <div>
+            <p class="text-xs text-slate-500 uppercase tracking-wider mb-2 px-2">
+                Users
+            </p>
+
+            <a href="{% url 'customer_list' %}"
+               class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition
+               {% if url_name == 'customer_list' %}bg-blue-600 text-white{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <i class="fa-solid fa-users"></i> Customers
+            </a>
+
+        </div>
 
         {% endwith %}
+
     </nav>
 
-    <!-- Logout -->
-    <div class="p-4 border-t border-slate-700">
+    <!-- LOGOUT -->
+    <div class="p-4 border-t border-slate-800">
         <form method="POST" action="{% url 'logout' %}">
             {% csrf_token %}
             <button type="submit"
-                class="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-red-300 hover:bg-red-600 hover:text-white transition">
+                class="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-red-300 hover:bg-red-600 hover:text-white transition font-medium">
                 <i class="fa-solid fa-right-from-bracket"></i>
                 Logout
             </button>
@@ -115,21 +143,25 @@
 
 </aside>
 
-<!-- Main Content -->
-<main class="md:ml-64 p-4 md:p-8 min-h-screen">
+<!-- MAIN -->
+<main class="md:ml-64 min-h-screen">
 
-    <div class="bg-white rounded-xl shadow-sm p-6 min-h-[90vh]">
-        {% block content %}{% endblock %}
+    <div class="p-4 md:p-8">
+
+        <div class="bg-white rounded-2xl shadow-md border border-slate-100 min-h-[90vh] p-6">
+
+            {% block content %}{% endblock %}
+
+        </div>
+
     </div>
 
 </main>
 
-<!-- Mobile Sidebar Script -->
 <script>
-    function toggleSidebar() {
-        const sidebar = document.getElementById("sidebar");
-        sidebar.classList.toggle("-translate-x-full");
-    }
+function toggleSidebar() {
+    document.getElementById("sidebar").classList.toggle("-translate-x-full");
+}
 </script>
 
 </body>

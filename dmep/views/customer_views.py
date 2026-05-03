@@ -11,7 +11,8 @@ from django.views.decorators.http import require_POST
 from datetime import timedelta
 from ..utils.utils import get_guest_id
 
-from ..models import Product, Customer, Sale, SaleItem, Discount, Category, HelpCenter, NewsletterSubscriber
+from ..models import Product, Customer, Sale, SaleItem, Discount, Category, HelpCenter, NewsletterSubscriber, StockMovement
+from ..utils.stock import stock_out, stock_in
 from ..utils.discounts import calculate_discounted_price
 
 
@@ -138,15 +139,29 @@ def cart_view(request):
     cart = {str(k): v for k, v in cart.items()}
     selected_keys = set(str(k) for k in selected_keys)
 
+    # 🔥 CLEAN CART (IMPORTANT FIX)
+    clean_cart = {}
+    for pid, qty in cart.items():
+        if isinstance(qty, dict):
+            qty = qty.get("qty", 1)
+
+        try:
+            qty = int(qty)
+        except:
+            continue
+
+        clean_cart[pid] = qty
+
+    cart = clean_cart
+    request.session["cart"] = cart
+
     cart_items = []
     subtotal = Decimal("0.00")
     discount_total = Decimal("0.00")
 
     for pid, qty in cart.items():
-        product = get_object_or_404(Product, id=pid)
-        qty = int(qty)
+        product = Product.objects.get(id=pid)
 
-        # discount price
         final_price, _, _ = calculate_discounted_price(product)
 
         final_price = Decimal(str(final_price))
@@ -231,14 +246,12 @@ def clear_cart(request):
     request.session["cart"] = {}
     request.session["selected_items"] = []
     request.session.modified = True
-
     return redirect("cart")
 
-def clear_cart_session(request):
-    request.session["cart"] = {}
-    request.session.modified = True
-    return redirect("cart")
-
+def reset_session(request):
+    request.session.flush()
+    return redirect("dashboard")
+    
 @require_POST
 def update_selected_items(request):
     import json
@@ -300,7 +313,7 @@ def checkout_view(request):
         if str(pid) not in selected:
             continue
 
-        product = get_object_or_404(Product, id=pid)
+        product = Product.objects.get(id=pid)
         qty = int(qty)
 
         final_price, _, _ = calculate_discounted_price(product)
@@ -331,7 +344,7 @@ def checkout_view(request):
         "customer": customer,
         "payment_choices": [
             ("COD", "Cash on Delivery"),
-            ("GCASH", "GCash"),
+            # ("GCASH", "GCash"),
         ],
     })
 
@@ -357,9 +370,6 @@ def process_sale(request):
 
     customer = None
 
-    # =========================
-    # CUSTOMER HANDLING
-    # =========================
     if phone:
         customer, created = Customer.objects.get_or_create(
             phone=phone,
@@ -391,9 +401,6 @@ def process_sale(request):
 
     request.session["customer_id"] = customer.id
 
-    # =========================
-    # CREATE SALE
-    # =========================
     sale = Sale.objects.create(
         customer=customer,
         guest_id=guest_id,
@@ -412,7 +419,7 @@ def process_sale(request):
         if str(pid) not in selected:
             continue
 
-        product = get_object_or_404(Product, id=pid)
+        product = Product.objects.get(id=pid)
         qty = int(qty)
 
         final_price, discount_obj, discount_pct = calculate_discounted_price(product)
@@ -430,7 +437,7 @@ def process_sale(request):
         # =========================
         # SAVE ITEM (FIXED)
         # =========================
-        SaleItem.objects.create(
+        sale_item = SaleItem.objects.create(
             sale=sale,
             product=product,
             quantity=qty,
@@ -441,6 +448,13 @@ def process_sale(request):
             discount_type=getattr(discount_obj, "type", None),
             discount_pct=float(discount_pct or 0),
             discount_amount=float(line_discount or 0),
+        )
+        StockMovement.objects.create(
+            product=product,
+            sale_item=sale_item,
+            type="out",
+            quantity=qty,
+            reason=f"Sale {sale.order_code}"
         )
 
         product.stock_qty = max((product.stock_qty or 0) - qty, 0)
@@ -505,10 +519,10 @@ def order_detail(request, order_code):
 
     order = get_object_or_404(
         Sale,
-        id=sale_id,
+        order_code=order_code,
         customer__phone=phone
     )
-
+    
     return render(request, "customer/orders/order_detail.html", {
         "order": order,
         "phone": phone  # 👈 keep this!
@@ -521,8 +535,27 @@ def cancel_order(request, order_code):
     if not sale.can_cancel():
         return JsonResponse({'error': 'Cannot cancel this order'}, status=400)
 
-    sale.status = 'cancelled'
-    sale.save()
+    with transaction.atomic():
+
+        for item in sale.sale_items.select_related("product"):
+
+            product = item.product
+
+            # 🔥 RESTORE STOCK
+            product.stock_qty = (product.stock_qty or 0) + item.quantity
+            product.save()
+
+            # 🔥 STOCK MOVEMENT LOG
+            StockMovement.objects.create(
+                product=product,
+                sale_item=item,
+                type="in",
+                quantity=item.quantity,
+                reason=f"Order Cancelled {sale.order_code}"
+            )
+
+        sale.status = 'cancelled'
+        sale.save()
 
     return JsonResponse({'success': True})
 

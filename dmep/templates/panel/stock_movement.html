@@ -1,200 +1,221 @@
 {% extends 'panel/base.html' %}
+{% load static %}
+
 {% block content %}
 
-<!-- HEADER -->
-<div class="flex justify-between items-center mb-6">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+  
+  body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
 
-    <div>
-        <h1 class="text-2xl font-semibold text-slate-800">Stock Movement Log</h1>
-        <p class="text-sm text-slate-400">
-            Auto-generated from Purchase Orders, Sales, and Returns
-        </p>
+  /* Table styling */
+  .table-container { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: #f1f5f9; color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; padding: 12px 16px; }
+  td { padding: 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+
+  /* Movement Type Badges */
+  .badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+  .badge-in { background: #dcfce7; color: #15803d; }
+  .badge-out { background: #fee2e2; color: #b91c1c; }
+  .badge-return { background: #dbeafe; color: #1d4ed8; }
+  .badge-adj { background: #f3f4f6; color: #374151; }
+
+  /* Modal styling */
+  .modal-overlay { 
+    display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); 
+    backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; 
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-content { background: white; width: 100%; max-width: 450px; border-radius: 16px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+
+  .form-input { width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-size: 14px; transition: border 0.2s; }
+  .form-input:focus { outline: none; border-color: #6366f1; ring: 2px solid #6366f1; }
+  .form-label { font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px; display: block; }
+</style>
+
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+  <div>
+    <h1 class="text-2xl font-extrabold text-slate-800">Inventory Audit Log</h1>
+    <p class="text-slate-500 text-sm">Track every stock addition, sale, and manual adjustment.</p>
+  </div>
+  <button onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all">
+    <i class="fas fa-plus-circle"></i> New Adjustment
+  </button>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+  <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+    <div class="flex items-center gap-4">
+      <div class="p-3 bg-slate-100 rounded-lg text-slate-600"><i class="fas fa-exchange-alt"></i></div>
+      <div>
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Logs</p>
+        <p class="text-2xl font-black text-slate-800">{{ movements|length }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+    <div class="flex items-center gap-4">
+      <div class="p-3 bg-green-50 rounded-lg text-green-600"><i class="fas fa-arrow-down"></i></div>
+      <div>
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Stock Received</p>
+        <p class="text-2xl font-black text-green-600">{{ stock_in }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+    <div class="flex items-center gap-4">
+      <div class="p-3 bg-red-50 rounded-lg text-red-600"><i class="fas fa-arrow-up"></i></div>
+      <div>
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Stock Released</p>
+        <p class="text-2xl font-black text-red-600">{{ stock_out }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mb-4 relative">
+    <input type="text" id="logSearch" onkeyup="filterLogs()" placeholder="Search product or reason..." class="pl-10 pr-4 py-2 border rounded-lg w-full md:w-80 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+    <i class="fas fa-search absolute left-3 top-3 text-slate-400"></i>
+</div>
+
+<div class="table-container">
+  <table id="logTable">
+    <thead>
+      <tr>
+        <th>Product Info</th>
+        <th>Movement Type</th>
+        <th>Quantity</th>
+        <th>Reference/Source</th>
+        <th>Reason/Notes</th>
+        <th class="text-right">Timestamp</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for m in movements %}
+      <tr class="hover:bg-slate-50/50 transition-colors">
+        <td>
+          <div class="font-bold text-slate-700">{{ m.product.name }}</div>
+          <div class="text-[10px] text-slate-400">SKU: {{ m.product.sku|default:"N/A" }}</div>
+        </td>
+
+        <td>
+          {% if m.type == 'in' %}
+            <span class="badge badge-in"><i class="fas fa-plus"></i> STOCK IN</span>
+          {% elif m.type == 'out' %}
+            <span class="badge badge-out"><i class="fas fa-minus"></i> STOCK OUT</span>
+          {% elif m.type == 'return' %}
+            <span class="badge badge-return"><i class="fas fa-undo"></i> RETURN</span>
+          {% else %}
+            <span class="badge badge-adj"><i class="fas fa-sliders-h"></i> ADJ</span>
+          {% endif %}
+        </td>
+
+        <td class="font-mono font-bold text-lg">
+          {{ m.quantity }}
+        </td>
+
+        <td>
+          {% if m.po_item %}
+            <span class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded text-xs font-semibold">PO #{{ m.po_item.po.id }}</span>
+          {% elif m.sale_item %}
+            <span class="bg-amber-50 text-amber-700 px-2 py-1 rounded text-xs font-semibold">SALE #{{ m.sale_item.sale.id }}</span>
+          {% else %}
+            <span class="text-slate-400 text-xs italic">Manual Adjustment</span>
+          {% endif %}
+        </td>
+
+        <td class="text-slate-500 text-xs italic max-w-xs truncate">
+          {{ m.reason|default:"—" }}
+        </td>
+
+        <td class="text-right">
+          <div class="text-slate-600 font-medium text-xs">{{ m.moved_at|date:"M d, Y" }}</div>
+          <div class="text-slate-400 text-[10px]">{{ m.moved_at|date:"H:i A" }}</div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" class="text-center py-20">
+          <img src="https://cdn-icons-png.flaticon.com/512/5058/5058432.png" class="w-16 h-16 mx-auto mb-4 opacity-20" alt="empty">
+          <p class="text-slate-400 font-medium">No history recorded yet.</p>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div id="modal" class="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal-content">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold text-slate-800">Manual Stock Entry</h2>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
     </div>
 
-    <!-- ONLY ADMIN ADJUSTMENT -->
-    <button onclick="openModal()"
-        class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm">
-        + Adjustment
-    </button>
-
-</div>
-
-<!-- TABLE -->
-<div class="bg-white border rounded-xl shadow-sm overflow-hidden">
-
-<table class="w-full text-sm">
-
-<thead class="bg-slate-900 text-white text-xs uppercase">
-<tr>
-    <th class="p-3 text-left">Product</th>
-    <th class="p-3 text-center">Type</th>
-    <th class="p-3 text-center">Qty</th>
-    <th class="p-3 text-left">Source</th>
-    <th class="p-3 text-left">Reason</th>
-    <th class="p-3 text-right">Date</th>
-</tr>
-</thead>
-
-<tbody>
-
-{% for m in movements %}
-<tr class="border-b hover:bg-slate-50">
-
-    <!-- PRODUCT -->
-    <td class="p-3 font-medium text-slate-800">
-        {{ m.product.name }}
-    </td>
-
-    <!-- TYPE -->
-    <td class="text-center">
-        <span class="px-2 py-1 text-xs rounded-full font-medium
-            {% if m.type == 'in' %}bg-green-100 text-green-700
-            {% elif m.type == 'out' %}bg-red-100 text-red-700
-            {% elif m.type == 'return' %}bg-blue-100 text-blue-700
-            {% else %}bg-slate-100 text-slate-600{% endif %}">
-            {{ m.get_type_display }}
-        </span>
-    </td>
-
-    <!-- QTY -->
-    <td class="text-center font-semibold text-slate-800">
-        {{ m.quantity }}
-    </td>
-
-    <!-- SOURCE -->
-    <td class="text-sm text-slate-500">
-
-        {% if m.po_item %}
-            <span class="px-2 py-1 bg-indigo-50 text-indigo-600 rounded text-xs">
-                PO #{{ m.po_item.po.id }}
-            </span>
-
-        {% elif m.sale_item %}
-            <span class="px-2 py-1 bg-blue-50 text-blue-600 rounded text-xs">
-                Sale #{{ m.sale_item.sale.id }}
-            </span>
-
-        {% else %}
-            <span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs">
-                Manual Adjustment
-            </span>
-        {% endif %}
-
-    </td>
-
-    <!-- REASON -->
-    <td class="text-slate-600">
-        {{ m.reason|default:"—" }}
-    </td>
-
-    <!-- DATE -->
-    <td class="text-right pr-4 text-xs text-slate-400">
-        {{ m.moved_at|date:"M d, Y H:i" }}
-    </td>
-
-</tr>
-
-{% empty %}
-<tr>
-    <td colspan="6" class="text-center py-10 text-slate-400">
-        No stock movements found
-    </td>
-</tr>
-{% endfor %}
-
-</tbody>
-</table>
-
-</div>
-
-<!-- ================= ADJUSTMENT MODAL (ONLY MANUAL CASE) ================= -->
-<div id="modal" class="fixed inset-0 hidden items-center justify-center z-50">
-
-    <div class="absolute inset-0 bg-black/50" onclick="closeModal()"></div>
-
-    <div class="bg-white w-full max-w-md rounded-xl p-6 shadow-xl relative">
-
-        <div class="flex justify-between items-center mb-5">
-            <h2 class="text-lg font-semibold text-slate-800">
-                Manual Stock Adjustment
-            </h2>
-
-            <button onclick="closeModal()"
-                class="text-slate-500 hover:text-red-500 text-xl">
-                ✕
-            </button>
+    <form method="POST">
+      {% csrf_token %}
+      <div class="space-y-4">
+        <div>
+          <label class="form-label">Select Product</label>
+          <select name="product" class="form-input">
+            {% for p in products %}
+              <option value="{{ p.id }}">{{ p.name }} (Stock: {{ p.stock_qty }})</option>
+            {% endfor %}
+          </select>
         </div>
 
-        <form method="POST">
-            {% csrf_token %}
-
-            <!-- PRODUCT -->
-            <div class="mb-3">
-                <label class="text-sm text-slate-600">Product</label>
-                <select name="product"
-                    class="w-full border rounded-lg p-2 mt-1">
-                    {% for p in products %}
-                        <option value="{{ p.id }}">{{ p.name }}</option>
-                    {% endfor %}
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="form-label">Movement Type</label>
+                <select name="type" class="form-input">
+                  <option value="adjustment">Adjustment</option>
+                  <option value="return">Return</option>
+                  <option value="in">Manual Stock In</option>
+                  <option value="out">Manual Stock Out</option>
                 </select>
             </div>
-
-            <!-- TYPE -->
-            <div class="mb-3">
-                <label class="text-sm text-slate-600">Type</label>
-                <select name="type"
-                    class="w-full border rounded-lg p-2 mt-1">
-
-                    <option value="adjustment">Adjustment</option>
-                    <option value="return">Return</option>
-
-                </select>
+            <div>
+                <label class="form-label">Quantity</label>
+                <input type="number" name="quantity" placeholder="0" class="form-input" required>
             </div>
+        </div>
 
-            <!-- QTY -->
-            <div class="mb-3">
-                <label class="text-sm text-slate-600">Quantity</label>
-                <input type="number" name="quantity"
-                    class="w-full border rounded-lg p-2 mt-1"
-                    required>
-            </div>
+        <div>
+          <label class="form-label">Reason / Reference Note</label>
+          <textarea name="reason" rows="3" placeholder="e.g. Damaged during handling, End of year count..." class="form-input"></textarea>
+        </div>
+      </div>
 
-            <!-- REASON -->
-            <div class="mb-4">
-                <label class="text-sm text-slate-600">Reason</label>
-                <textarea name="reason"
-                    class="w-full border rounded-lg p-2 mt-1"></textarea>
-            </div>
-
-            <button class="w-full bg-slate-900 hover:bg-slate-800 text-white py-2 rounded-lg">
-                Save Adjustment
-            </button>
-
-        </form>
-
-    </div>
+      <div class="flex gap-3 mt-8">
+        <button type="button" onclick="closeModal()" class="flex-1 px-4 py-2 border border-slate-200 rounded-xl font-semibold text-slate-600 hover:bg-slate-50 transition-all">
+          Cancel
+        </button>
+        <button type="submit" class="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-200 transition-all">
+          Save Record
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
-<!-- JS -->
 <script>
+  function openModal() { document.getElementById("modal").classList.add("open"); }
+  function closeModal() { document.getElementById("modal").classList.remove("open"); }
 
-function openModal() {
-    document.getElementById("modal").classList.remove("hidden");
-    document.getElementById("modal").classList.add("flex");
-}
-
-function closeModal() {
-    document.getElementById("modal").classList.add("hidden");
-    document.getElementById("modal").classList.remove("flex");
-}
-
-/* close on outside click */
-document.addEventListener("click", function(e){
-    if(e.target.id === "modal"){
-        closeModal();
-    }
-});
-
+  // Simple Search Filter
+  function filterLogs() {
+    let input = document.getElementById("logSearch").value.toLowerCase();
+    let rows = document.querySelectorAll("#logTable tbody tr");
+    rows.forEach(row => {
+      let text = row.innerText.toLowerCase();
+      row.style.display = text.includes(input) ? "" : "none";
+    });
+  }
 </script>
 
 {% endblock %}

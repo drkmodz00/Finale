@@ -1,51 +1,44 @@
+const cartIcon = document.querySelector('[href="{% url "cart" %}"]');
 
-function showProduct(card) {
-  const name         = card.dataset.name;
-  const cartUrl      = card.dataset.url;
-  const img          = card.dataset.img;
-  const hasDiscount  = card.dataset.hasDiscount === "true";
-  const finalPrice   = parseFloat(card.dataset.finalPrice) || 0;
-  const sellingPrice = parseFloat(card.dataset.sellingPrice) || 0;
-  const discount     = parseFloat(card.dataset.discount || 0);
-  const status       = card.dataset.status;
-  const category     = card.dataset.category;
-  const supplier     = card.dataset.supplier;
+function flyToCart(imgSrc, startX, startY, url) {
 
-  document.getElementById("modalProductName").textContent = name;
+    const img = document.createElement("img");
+    img.src = imgSrc;
+    img.className = "fixed w-14 h-14 object-cover rounded-xl z-[9999] transition-all duration-700";
 
-  const imgEl = document.getElementById("modalProductImage");
-  imgEl.src = img;
+    document.body.appendChild(img);
 
-  document.getElementById("modalCategory").textContent = category;
-  document.getElementById("modalSupplier").textContent = supplier;
+    const cart = cartIcon.getBoundingClientRect();
 
-  const sep = document.getElementById("metaSep");
-  sep.classList.toggle("d-none", !(category && supplier));
+    img.style.left = startX + "px";
+    img.style.top = startY + "px";
 
-  const priceWrapper = document.getElementById("modalPriceWrapper");
+    setTimeout(() => {
+        img.style.left = cart.left + "px";
+        img.style.top = cart.top + "px";
+        img.style.width = "18px";
+        img.style.height = "18px";
+        img.style.opacity = "0.4";
+    }, 30);
 
-  if (hasDiscount) {
-    priceWrapper.innerHTML = `
-      <span style="color:#e60023;font-weight:bold;font-size:1.5rem;">
-        ₱${finalPrice.toFixed(2)}
-      </span>
-      <span style="text-decoration:line-through;color:gray;margin-left:8px;">
-        ₱${sellingPrice.toFixed(2)}
-      </span>
-      <span style="color:#e60023;margin-left:6px;">-${discount}%</span>
-    `;
-  } else {
-    priceWrapper.innerHTML = `
-      <span style="font-size:1.5rem;font-weight:bold;">
-        ₱${sellingPrice.toFixed(2)}
-      </span>
-    `;
-  }
+    setTimeout(() => {
+        img.remove();
+        fetch(url).then(() => location.reload());
+    }, 700);
+}
 
-  document.getElementById("modalStatus").textContent = status;
+document.querySelectorAll(".add-to-cart-btn").forEach(btn => {
+    btn.addEventListener("click", function(e){
+        e.preventDefault();
 
-  document.getElementById("modalAddToCart").href = cartUrl;
+        const img = this.dataset.img;
+        const url = this.dataset.url;
+        const rect = this.getBoundingClientRect();
 
-  const modal = new bootstrap.Modal(document.getElementById("productModal"));
-  modal.show();
+        flyToCart(img, rect.left, rect.top, url);
+    });
+});
+
+function closeModal(){
+    document.getElementById("successModal").style.display = "none";
 }
