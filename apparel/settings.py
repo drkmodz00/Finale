@@ -27,9 +27,13 @@ if os.path.exists(BASE_DIR / ".env"):
 # SECURITY
 # ──────────────────────────────────────────────
 
-SECRET_KEY = os.getenv("SECRET_KEY", "change-this-in-production-use-env-variable")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise Exception("SECRET_KEY is missing")
+
 DEBUG = False
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", ".onrender.com"]# ──────────────────────────────────────────────
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", ".railway.app"]
+
 # APPLICATIONS
 # ──────────────────────────────────────────────
 
