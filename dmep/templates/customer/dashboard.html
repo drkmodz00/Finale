@@ -85,7 +85,7 @@
         <div class="group cursor-pointer"
              data-id="{{ product.id }}"
              data-url="{% url 'cart_add' product.id %}"
-             data-img="{% if product.img and product.img.name %}{{ product.img.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}">
+             data-img="{% if product.img and product.img.name %}{{ product.img.url }}{% else %}{% static 'img/no-image.png' %}{% endif %}">
 
             <div class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl transition duration-300">
 
@@ -98,14 +98,14 @@
                     </span>
                     {% endif %}
 
-                    <img src="{% if product.img %}{{ product.img.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}"
+                    <img src="{% if product.img %}{{ product.img.url }}{% else %}{% static 'img/no-image.png' %}{% endif %}"
                          class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
 
                     <!-- Add Cart -->
                     <button
                         class="add-to-cart-btn absolute bottom-4 right-4 w-11 h-11 bg-black text-white rounded-xl flex items-center justify-center hover:bg-blue-600 transition"
                         data-url="{% url 'cart_add' product.id %}"
-                        data-img="{% if product.img and product.img.name %}{{ product.img.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}">
+                        data-img="{% if product.img and product.img.name %}{{ product.img.url }}{% else %}{% static 'img/no-image.png' %}{% endif %}">
                         <i class="fas fa-shopping-cart text-sm"></i>
                     </button>
 

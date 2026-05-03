@@ -440,7 +440,7 @@
              onclick="showProduct(this)"
              data-name="{{ product.name }}"
              data-url="{% url 'cart_add' product.id %}"
-             data-img="{% if product.img and product.img.name %}{{ product.img.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}"
+             data-img="{% if product.img and product.img.name %}{{ product.img.url }}{% else %}{% static 'img/no-image.png' %}{% endif %}"
              data-final-price="{{ product.final_price }}"
              data-selling-price="{{ product.selling_price }}"
              data-discount="{{ product.discount_percent }}"
@@ -459,7 +459,7 @@
             </span>
             {% endif %}
 
-            <img src="{% if product.img and product.img.name %}{{ product.img.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}"
+            <img src="{% if product.img and product.img.name %}{{ product.img.url }}{% else %}{% static 'img/no-image.png' %}{% endif %}"
                  alt="{{ product.name }}"
                  class="prod-img w-full h-full object-cover">
 

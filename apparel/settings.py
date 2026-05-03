@@ -7,6 +7,10 @@ import os
 from dotenv import load_dotenv
 import dj_database_url
 
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
 # ──────────────────────────────────────────────
 # BASE DIRECTORY
 # ──────────────────────────────────────────────
@@ -14,14 +18,17 @@ import dj_database_url
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # load env FIRST
-load_dotenv(BASE_DIR / ".env")
+# load_dotenv(BASE_DIR / ".env")
+
+if os.path.exists(BASE_DIR / ".env"):
+    load_dotenv(BASE_DIR / ".env")
 
 # ──────────────────────────────────────────────
 # SECURITY
 # ──────────────────────────────────────────────
 
 SECRET_KEY = os.getenv("SECRET_KEY", "change-this-in-production-use-env-variable")
-DEBUG =False
+DEBUG = False
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", ".onrender.com"]# ──────────────────────────────────────────────
 # APPLICATIONS
 # ──────────────────────────────────────────────
@@ -33,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'cloudinary',
+    'cloudinary_storage',
     'dmep',
 ]
 
@@ -135,8 +144,8 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # ──────────────────────────────────────────────
 # MEDIA FILES
 # ──────────────────────────────────────────────
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# MEDIA_URL = '/media/'
+# MEDIA_ROOT = BASE_DIR / 'media'
 # ──────────────────────────────────────────────
 # DEFAULT PRIMARY KEY
 # ──────────────────────────────────────────────
@@ -149,3 +158,25 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/login/'
+
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": os.getenv("CLOUDINARY_CLOUD_NAME"),
+    "API_KEY": os.getenv("CLOUDINARY_API_KEY"),
+    "API_SECRET": os.getenv("CLOUDINARY_API_SECRET"),
+}
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True
+)
+DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}

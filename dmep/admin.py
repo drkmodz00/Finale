@@ -1,5 +1,10 @@
 from django.contrib import admin
-from .models import *
+from .models import (
+    Category, Supplier, Customer, Product,
+    Discount, Sale, SaleItem,
+    StockMovement, PurchaseOrder, POItem,
+    HelpCenter
+)
 
 class SaleItemInline(admin.TabularInline):
     model = SaleItem
@@ -58,12 +63,12 @@ class ProductAdmin(admin.ModelAdmin):
         'cost_price', 'selling_price', 'stock_qty', 'reorder_level', 'status', 'created_at',
     )
     list_filter = ('status', 'category', 'supplier')
-    search_fields = ('name', 'sku', 'barcode')
+    search_fields = ('name', 'sku')
     ordering = ('name',)
     autocomplete_fields = ('category', 'supplier')
 
     def get_search_fields(self, request):
-        return ('name', 'sku', 'barcode')
+        return ('name', 'sku')
 
 @admin.register(Discount)
 class DiscountAdmin(admin.ModelAdmin):

@@ -140,7 +140,7 @@
         {% for item in items %}
         <div class="flex items-center gap-4 px-5 py-4 hover:bg-stone-50 transition">
 
-          <img src="{% if item.product.img %}{{ item.product.img.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}"
+          <img src="{% if item.product.img %}{{ item.product.img.url }}{% else %}{% static 'img/no-image.png' %}{% endif %}"
                class="w-12 h-12 rounded-lg object-cover border border-stone-100">
 
           <div class="flex-1">

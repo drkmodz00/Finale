@@ -47,7 +47,7 @@
                                onchange="updateSelectedCart()"
                                {% if item.selected %}checked{% endif %}>
 
-                        <img src="{% if item.image %}{{ item.image }}{% else %}{% static 'images/no-image.png' %}{% endif %}"
+                        <img src="{% if item.image %}{{ item.image }}{% else %}{% static 'img/no-image.png' %}{% endif %}"
                              class="w-16 h-16 rounded-xl object-cover bg-stone-100 border border-stone-100">
 
                         <div>

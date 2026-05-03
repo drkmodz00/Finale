@@ -70,8 +70,7 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return self.name
- 
+        return self.name or f"Product #{self.id}" 
 class Discount(models.Model):
     TYPE_CHOICES = [('percentage', 'Percentage'), ('fixed', 'Fixed Amount')]
     STATUS_CHOICES = [('active', 'Active'), ('inactive', 'Inactive'), ('expired', 'Expired')]
@@ -126,8 +125,8 @@ class Sale(models.Model):
             timezone.now() - self.sale_date < timedelta(hours=24)
         )
     def __str__(self):
-        return f"Sale #{self.id} - {self.customer}"
- 
+        return f"Sale #{self.id} - {self.customer or 'Guest'}"
+
 class SaleItem(models.Model):
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name='sale_items')
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, related_name='sale_items')
@@ -189,7 +188,7 @@ class StockMovement(models.Model):
                 product.stock_qty = (product.stock_qty or 0) + self.quantity
 
             elif self.type == 'out':
-                product.stock_qty -= self.quantity
+                product.stock_qty = (product.stock_qty or 0) - self.quantity
 
             elif self.type == 'adjustment':
                 product.stock_qty += self.quantity
