@@ -32,8 +32,7 @@ if not SECRET_KEY:
     raise Exception("SECRET_KEY is missing")
 
 DEBUG = False
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", ".railway.app"]
-
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", ".railway.app").split(",")
 # APPLICATIONS
 # ──────────────────────────────────────────────
 
