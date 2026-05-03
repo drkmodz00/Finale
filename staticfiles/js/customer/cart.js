@@ -11,6 +11,21 @@ function getCookie(name) {
     return cookieValue;
 }
 
+/* 🔥 ENABLE/DISABLE CHECKOUT BUTTON */
+function updateCheckoutState() {
+    const selectedCount = document.querySelectorAll(".cart-checkbox:checked").length;
+    const btn = document.getElementById("checkoutBtn");
+
+    if (!btn) return;
+
+    if (selectedCount > 0) {
+        btn.classList.remove("opacity-50", "pointer-events-none");
+    } else {
+        btn.classList.add("opacity-50", "pointer-events-none");
+    }
+}
+
+/* CART SELECTION UPDATE */
 function updateSelectedCart() {
     let selected = [];
 
@@ -29,27 +44,25 @@ function updateSelectedCart() {
     .then(res => res.json())
     .then(data => {
 
-    const subtotalEl = document.querySelector(".val-subtotal");
-    const discountEl = document.querySelector(".val-discount");
-    const totalEl = document.querySelector(".val-total");
+        document.querySelector(".val-subtotal").innerText =
+            "₱" + Number(data.subtotal || 0).toFixed(2);
 
-    if (subtotalEl) {
-        subtotalEl.innerText = "₱" + Number(data.subtotal || 0).toFixed(2);
-    }
-
-    if (discountEl) {
-        discountEl.innerText =
+        document.querySelector(".val-discount").innerText =
             data.discount_total > 0
                 ? "-₱" + Number(data.discount_total).toFixed(2)
                 : "--";
-    }
 
-    if (totalEl) {
-        totalEl.innerText = "₱" + Number(data.total || 0).toFixed(2);
-    }
-    })
-    .catch(err => console.error("Cart update failed:", err));
+        document.querySelector(".val-total").innerText =
+            "₱" + Number(data.total || 0).toFixed(2);
+
+        updateCheckoutState();
+
+    });
 }
+
+/* INIT */
+document.addEventListener("DOMContentLoaded", updateCheckoutState);
+
 function changeQty(productId, action) {
     fetch(`/cart/update/${productId}/${action}/`)
         .then(() => location.reload());

@@ -21,9 +21,8 @@ load_dotenv(BASE_DIR / ".env")
 # ──────────────────────────────────────────────
 
 SECRET_KEY = os.getenv("SECRET_KEY", "change-this-in-production-use-env-variable")
-DEBUG =True
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
-# ──────────────────────────────────────────────
+DEBUG =False
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", ".onrender.com"]# ──────────────────────────────────────────────
 # APPLICATIONS
 # ──────────────────────────────────────────────
 

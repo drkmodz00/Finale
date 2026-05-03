@@ -41,27 +41,6 @@ class Supplier(models.Model):
     def __str__(self):
         return self.name
     
-# class Cashier(models.Model):
-#     # ROLE_CHOICES = [('admin', 'Admin'), ('cashier', 'Cashier'), ('manager', 'Manager')]
-#     ROLE_CHOICES = [('admin', 'Admin')]
-
-#     STATUS_CHOICES = [('active', 'Active'), ('inactive', 'Inactive')]
- 
-#     full_name = models.CharField(max_length=255)
-#     username = models.CharField(max_length=150, unique=True)
-#     password_hash = models.CharField(max_length=255)
-#     role = models.CharField(max_length=50, choices=ROLE_CHOICES, blank=True, null=True)
-#     status = models.CharField(max_length=50, choices=STATUS_CHOICES, blank=True, null=True)
- 
-#     def set_password(self, raw_password):
-#         self.password_hash = make_password(raw_password)
-
-#     def check_password(self, raw_password):
-#         return check_password(raw_password, self.password_hash)
-
-#     def __str__(self):
-#         return self.full_name
-
 class Customer(models.Model):
     full_name = models.CharField(max_length=255)
     phone = models.CharField(max_length=50, blank=True, null=True)

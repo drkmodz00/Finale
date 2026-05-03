@@ -1,0 +1,1 @@
+web: gunicorn apparel.wsgi:application
