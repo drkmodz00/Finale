@@ -20,18 +20,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # load env FIRST
 # load_dotenv(BASE_DIR / ".env")
 
-if os.path.exists(BASE_DIR / ".env"):
+if DEBUG:
     load_dotenv(BASE_DIR / ".env")
+# if os.path.exists(BASE_DIR / ".env"):
+#     load_dotenv(BASE_DIR / ".env")
 
 # ──────────────────────────────────────────────
 # SECURITY
 # ──────────────────────────────────────────────
 
 # ───────── ENV SAFETY ─────────
-
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = os.environ.get("SECRET_KEY", "")
 if not SECRET_KEY:
-    raise Exception("SECRET_KEY is missing")
+    raise RuntimeError("SECRET_KEY not set")
 
 DEBUG = False
 
