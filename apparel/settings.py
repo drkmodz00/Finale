@@ -18,12 +18,13 @@ import cloudinary.api
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # load env FIRST
-# load_dotenv(BASE_DIR / ".env")
+# Load .env in local/dev if it exists (Railway will provide env vars via settings)
+dotenv_path = BASE_DIR / ".env"
+if dotenv_path.exists():
+    load_dotenv(dotenv_path)
 
-if DEBUG:
-    load_dotenv(BASE_DIR / ".env")
-# if os.path.exists(BASE_DIR / ".env"):
-#     load_dotenv(BASE_DIR / ".env")
+# DEBUG from env (default to False in production)
+DEBUG = os.getenv("DEBUG", "false").strip().lower() in ("1", "true", "yes", "on")
 
 # ──────────────────────────────────────────────
 # SECURITY
@@ -33,8 +34,6 @@ if DEBUG:
 SECRET_KEY = os.environ.get("SECRET_KEY", "")
 if not SECRET_KEY:
     raise RuntimeError("SECRET_KEY not set")
-
-DEBUG = False
 
 ALLOWED_HOSTS = os.getenv(
     "ALLOWED_HOSTS",

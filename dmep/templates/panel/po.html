@@ -245,6 +245,16 @@
 
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+  .item-card.low-stock {
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  }
+
+  .item-card.low-stock:hover {
+    border-color: #ef4444;
+    box-shadow: 0 12px 20px -5px rgba(239, 68, 68, 0.25);
+  }
 </style>
 
 <div class="pos-wrapper">
@@ -269,7 +279,7 @@
         {% for product in supplier_group.list %}
           {% if product.status == "active" %}
           <a href="{% url 'purchase_add' product.id %}" 
-             class="item-card {% if product.stock_qty <= 5 %}low-stock{% endif %}"
+             class="item-card {% if product.stock_qty <= product.reorder_level %}low-stock{% endif %}"
              data-name="{{ product.name|lower }}"
              data-supplier-ref="{{ supplier_group.grouper.id }}">
             
@@ -293,7 +303,7 @@
 
             <div class="meta-row">
               <span class="sku-text">{{ product.sku|default:"NO-SKU" }}</span>
-              <span class="stock-pill {% if product.stock_qty <= 5 %}stock-low{% else %}stock-ok{% endif %}">
+              <span class="stock-pill {% if product.stock_qty <= product.reorder_level %}stock-low{% else %}stock-ok{% endif %}">
                 {{ product.stock_qty }} in stock
               </span>
             </div>
