@@ -24,7 +24,7 @@ if dotenv_path.exists():
     load_dotenv(dotenv_path)
 
 # DEBUG from env (default to False in production)
-DEBUG = os.getenv("DEBUG", "false").strip().lower() in ("1", "true", "yes", "on")
+DEBUG = os.getenv("DEBUG", "FALSE").strip().lower() in ("1", "true", "yes", "on")
 
 # ──────────────────────────────────────────────
 # SECURITY
